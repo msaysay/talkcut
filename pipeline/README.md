@@ -21,7 +21,7 @@ python3 pipeline/cli/talkcut.py export --project "<工程>"
 
 `propose` 只写 `proposal.json`，不生成成片。`apply` 要求 changes 里 `"confirmed": true`，并且 `revision` 与最近一次 `read` 一致。
 
-`motion` 记下 `motion-pack/` 钩子。`cover` 在粗剪之后抽一帧。
+`motion --preset clean-knowledge` 用 Remotion 渲染竖屏字幕和配乐。`export` 默认仍是 FFmpeg；`--via remotion --preset <名字>` 改走合成。`cover` 默认抽帧，`--via remotion` 出标题静帧。
 
 没有口播原片时：
 

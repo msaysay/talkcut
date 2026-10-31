@@ -1,0 +1,33 @@
+{
+  "id": "clean-knowledge",
+  "compositionId": "clean-knowledge",
+  "coverCompositionId": "cover-still",
+  "name": "干净知识口播",
+  "motion": "fade",
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "colors": {
+    "ink": "#F4F1EA",
+    "accent": "#8FCBB8",
+    "pill": "rgba(10,14,16,0.58)",
+    "stroke": "#121614",
+    "badge": "#E7F3EE"
+  },
+  "caption": {
+    "bottom": 300,
+    "side": 72,
+    "bodySize": 54,
+    "hookSize": 76,
+    "numberSize": 92,
+    "goldSize": 64,
+    "ctaSize": 70,
+    "listSize": 54
+  },
+  "music": {
+    "speechVolume": 0.12,
+    "gapVolume": 0.4,
+    "ctaVolume": 0.07
+  },
+  "maxColors": 3
+}

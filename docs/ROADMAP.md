@@ -1,6 +1,6 @@
 # TalkCut 路线图
 
-粗剪路径已经能从 `import` 走到 `export`：默认用能量分段去掉气口和长静音，并按词删掉单独的填充词。语义多方向、Remotion 预设和语音模型下载仍在后面。
+粗剪能从 `import` 走到 FFmpeg `export`。`motion --preset` 再用 Remotion 叠竖屏字幕和鼓点配乐，预设是 `clean-knowledge` 与 `gold-line`。语义多方向和语音模型下载仍在后面。
 
 ## MVP
 

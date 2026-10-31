@@ -1,29 +1,19 @@
 # presets
 
-动效与配乐的预设目录。当前只有这份说明，没有模板文件，也没有 `approved.json`。
+一套预设一个文件夹：`preset.json` 管颜色、字号、配乐音量，旁边的组件管怎么画。
 
-## 计划中的两类预设
+| 文件夹 | 合成 id | 说明 |
+|---|---|---|
+| `clean-knowledge/` | `clean-knowledge` | 干净知识口播 |
+| `gold-line/` | `gold-line` | 强节奏金句 |
+| `cover/` | `cover-still` | 标题静帧，两条成片共用 |
 
-1. **鼓点风 BGM**（`bgm/`）  
-   用节奏型配乐托住口播，而不是铺一条恒定音量的背景。预设描述拍点、段落（开 / 展 / 收）和 ducking，不把音频时间码交给模型现编。
+`talkcut motion --preset <id>` 会读这里的 JSON，生成工程里的 `motion/props.json`，再调用 Remotion。
 
-2. **字幕 MG**（`captions/`）  
-   可复用的字幕动效：前 3 秒钩子关键词、数字放大、金句、列表序号、CTA 口令。主色不超过 3 种。名片条单独放在 `nameplate/`。
+Codex 和 WorkBuddy 改同一份文件即可，不要另起一套流程。满意后：
 
-## 锁定
-
-用户认可某一套模板之后，把预设 id 与版本写入 `presets/approved.json`（尚未创建）。之后的片子默认沿用这套，直到用户明确要求更换。
-
-锁定文件预期字段：
-
-```json
-{
-  "version": 1,
-  "bgmPreset": "drum-beat-default",
-  "captionPreset": "talking-head-mg",
-  "nameplatePreset": "credibility-left",
-  "lockedAt": "ISO-8601"
-}
+```bash
+python3 pipeline/cli/talkcut.py motion --project <工程> --preset clean-knowledge --lock
 ```
 
-未锁定时，第 3 段只允许使用占位合成，不能假装已经套上鼓点或字幕动效。
+这会写入 `presets/approved.json`。配乐文件由用户自己提供；省略时只用生成的节拍底乐。

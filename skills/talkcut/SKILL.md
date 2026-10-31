@@ -57,13 +57,19 @@ python3 <仓库根>/pipeline/cli/talkcut.py export --project "<工程目录>"
    粗剪。去掉钩子前的准备动作、过长静音和无关支线；按钩子与开—展—收重排。保留笑、气口和自然反应。修改形状见 `pipeline/contracts/edit-contract.json`。用最近一次 read 的 revision。
 
 6. **motion**  
-   从 `motion-pack/presets/` 选鼓点风 BGM 和字幕 MG。预设还没有文件时，明确说只有占位合成，不要假装已经配乐。用户认可模板后锁定，下一条默认沿用。BGM 不压人声。
+   粗剪之后再上字幕和配乐。预设只有两套，写在 `motion-pack/presets/`：`clean-knowledge`（干净知识口播）、`gold-line`（强节奏金句）。
+
+   ```text
+   python3 <仓库根>/pipeline/cli/talkcut.py motion --project "<工程目录>" --preset clean-knowledge --music "<用户的BGM>"
+   ```
+
+   用户没给音乐就不要编造曲目，省略 `--music`，程序会放一段生成的节拍底乐。人声段配乐会自动变小。用户认可后加 `--lock`，下一条继续用同一个预设名。不要为这一条新写一套动画。
 
 7. **cover**  
    需要封面时再做。公式是关键词 + 数字 + 人。人物约占画面三分之二。关掉画面标题不等于默许封面标题。
 
 8. **export**  
-   封面、标题和最终渲染一起交付。给出真实成片路径和工程目录。做不到就说明卡在哪一步。
+   默认用 FFmpeg 导出粗剪，路径是 `export/final.mp4`。用户要竖屏字幕成片时用 `export --via remotion --preset <名字>`，或直接采用上一步 `motion` 写出的 `export/motion-<preset>.mp4`。给出真实路径。做不到就说明卡在哪一步。
 
 ## 硬规则
 
@@ -75,8 +81,8 @@ python3 <仓库根>/pipeline/cli/talkcut.py export --project "<工程目录>"
 
 ## 现在还没有
 
-- `motion-pack/presets/` 里的鼓点模板。`motion` 只记下钩子，导出不走 Remotion
 - 语义上的多方向规划。`propose` 只根据气口、静音、填充词和营销钩子给一个方向
 - 语音模型。不运行 `setup --with-asr` 就不会下载
+- 用户没提供的真实配乐。生成的底乐只为卡点预览
 
 这些缺口写在 `engine/README.md`、`docs/ROADMAP.md` 和 `motion-pack/presets/README.md`。

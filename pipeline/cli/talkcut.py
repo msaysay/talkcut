@@ -18,13 +18,13 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from engine.errors import TalkCutError
+from engine.motion import render_cover_still, render_motion
 from engine.pipeline import (
     apply_edit,
     choose_plan,
     cover_frame,
     export_movie,
     import_media,
-    motion_hook,
     propose,
     read_project,
 )
@@ -48,6 +48,9 @@ SCAFFOLD_FILES = [
     "engine/shared/editor_export.py",
     "engine/shared/video_finish.py",
     "engine/asr.py",
+    "engine/motion.py",
+    "motion-pack/presets/clean-knowledge/preset.json",
+    "motion-pack/presets/gold-line/preset.json",
     "THIRD_PARTY_NOTICES.md",
 ]
 
@@ -68,11 +71,13 @@ def command_doctor(_args: argparse.Namespace) -> int:
     lines, code = doctor_lines()
     for line in lines:
         print(line)
-    motion = ROOT / "motion-pack" / "node_modules"
+    motion = ROOT / "motion-pack" / "node_modules" / "remotion"
+    presets = [path.name for path in (ROOT / "motion-pack" / "presets").iterdir() if (path / "preset.json").is_file()]
+    print("ok  动效预设 " + "、".join(presets))
     if motion.is_dir():
-        print("ok  motion-pack 依赖已安装（本轮导出不使用它）")
+        print("ok  motion-pack 的 Remotion 已安装。motion --preset 会渲染竖屏成片。")
     else:
-        print("可选  motion-pack 依赖未安装。粗剪导出不需要 Remotion。")
+        print("注意  motion-pack 依赖未安装。粗剪仍可 FFmpeg 导出；动效需在 motion-pack/ 执行 npm install。")
     if code == 0:
         print("ffmpeg 可用。语音模型未安装时，import 默认走能量分段。")
     return code
@@ -139,17 +144,33 @@ def command_apply(args: argparse.Namespace) -> int:
 
 
 def command_export(args: argparse.Namespace) -> int:
+    if args.via == "remotion":
+        if not args.preset:
+            raise TalkCutError("export --via remotion 需要 --preset。")
+        _print(render_motion(Path(args.project), args.preset, music=Path(args.music) if args.music else None, bpm=args.bpm))
+        return 0
     _print(export_movie(Path(args.project)))
     return 0
 
 
 def command_cover(args: argparse.Namespace) -> int:
+    if args.via == "remotion":
+        _print(render_cover_still(Path(args.project), args.preset, title=args.title))
+        return 0
     _print(cover_frame(Path(args.project)))
     return 0
 
 
 def command_motion(args: argparse.Namespace) -> int:
-    _print(motion_hook(Path(args.project)))
+    _print(
+        render_motion(
+            Path(args.project),
+            args.preset,
+            music=Path(args.music) if args.music else None,
+            bpm=args.bpm,
+            lock=args.lock,
+        )
+    )
     return 0
 
 
@@ -193,16 +214,27 @@ def build_parser() -> argparse.ArgumentParser:
     apply.add_argument("--changes", required=True)
     apply.set_defaults(func=command_apply)
 
-    motion = sub.add_parser("motion", help="记下 Remotion 钩子，本轮不渲染动效")
+    motion = sub.add_parser("motion", help="用 Remotion 预设渲染竖屏字幕和配乐")
     motion.add_argument("--project", required=True)
+    motion.add_argument("--preset", required=True, help="clean-knowledge 或 gold-line")
+    motion.add_argument("--music", help="用户自带的 BGM 文件；省略则生成节拍底乐")
+    motion.add_argument("--bpm", type=float, help="节拍；省略时从配乐检测")
+    motion.add_argument("--lock", action="store_true", help="把该预设写进 presets/approved.json")
     motion.set_defaults(func=command_motion)
 
-    cover = sub.add_parser("cover", help="从保留片段抽一帧封面")
+    cover = sub.add_parser("cover", help="抽封面帧，或渲染 Remotion 封面静帧")
     cover.add_argument("--project", required=True)
+    cover.add_argument("--via", choices=["frame", "remotion"], default="frame")
+    cover.add_argument("--preset", default="clean-knowledge")
+    cover.add_argument("--title")
     cover.set_defaults(func=command_cover)
 
-    export = sub.add_parser("export", help="导出可播放的 mp4")
+    export = sub.add_parser("export", help="FFmpeg 直出，或 --via remotion 合成竖屏成片")
     export.add_argument("--project", required=True)
+    export.add_argument("--via", choices=["ffmpeg", "remotion"], default="ffmpeg")
+    export.add_argument("--preset")
+    export.add_argument("--music")
+    export.add_argument("--bpm", type=float)
     export.set_defaults(func=command_export)
     return parser
 

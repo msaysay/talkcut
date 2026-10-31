@@ -1,0 +1,33 @@
+{
+  "id": "gold-line",
+  "compositionId": "gold-line",
+  "coverCompositionId": "cover-still",
+  "name": "强节奏金句",
+  "motion": "beat-punch",
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "colors": {
+    "ink": "#FFF6D8",
+    "accent": "#FFB703",
+    "pill": "rgba(28,12,6,0.5)",
+    "stroke": "#1A0C06",
+    "badge": "#FFE08A"
+  },
+  "caption": {
+    "bottom": 280,
+    "side": 64,
+    "bodySize": 56,
+    "hookSize": 84,
+    "numberSize": 104,
+    "goldSize": 72,
+    "ctaSize": 80,
+    "listSize": 56
+  },
+  "music": {
+    "speechVolume": 0.14,
+    "gapVolume": 0.48,
+    "ctaVolume": 0.08
+  },
+  "maxColors": 3
+}

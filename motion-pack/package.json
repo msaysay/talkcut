@@ -2,7 +2,7 @@
   "name": "talkcut-motion-pack",
   "version": "0.0.0",
   "private": true,
-  "description": "TalkCut Remotion motion-pack stub. Drum-beat BGM and caption motion presets will live under presets/.",
+  "description": "TalkCut Remotion motion pack: vertical captions and ducked BGM. Company license may be required.",
   "scripts": {
     "studio": "remotion studio src/index.ts",
     "compositions": "remotion compositions src/index.ts",

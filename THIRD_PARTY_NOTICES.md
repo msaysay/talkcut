@@ -68,3 +68,17 @@ TalkCut does not bundle these. `setup` records ffmpeg if it is already on PATH. 
 | SenseVoice | https://github.com/FunAudioLLM/SenseVoice | Not downloaded by TalkCut. Optional upstream of sayframe's aligner; see that model card if you use it yourself |
 
 PyAV, ONNX Runtime, and a SenseVoice ONNX build are sayframe setup dependencies. This port's default path uses ffmpeg plus the Python standard library, and does not fetch those packages.
+
+## Remotion
+
+`motion-pack/` depends on [Remotion](https://www.remotion.dev/) 4.0.539 (`remotion` and `@remotion/cli`). Remotion is source-available, not MIT.
+
+- Individuals, non-profits, and for-profit organizations with up to 3 employees may use it to create videos free of charge, including commercial videos.
+- Larger for-profit companies need a company license: https://www.remotion.pro/license
+- Terms: https://www.remotion.dev/docs/license
+
+TalkCut does not relicense Remotion. Rendering calls the Remotion CLI; it does not vendor Remotion's source.
+
+## Fonts at render time
+
+The motion render copies a local CJK font into the project public folder. It prefers `DroidSansFallbackFull.ttf` (Apache-2.0) when that file is installed, or `TALKCUT_FONT`. The font file is not committed.

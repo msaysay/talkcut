@@ -1,36 +1,60 @@
 import React from "react";
-import { AbsoluteFill, Composition, useCurrentFrame } from "remotion";
+import {Composition} from "remotion";
+import {CoverStill} from "../presets/cover/Cover";
+import {CleanKnowledge} from "../presets/clean-knowledge/Captions";
+import {GoldLine} from "../presets/gold-line/Captions";
+import type {MotionProps} from "./types";
+import clean from "../presets/clean-knowledge/preset.json";
 
-const Placeholder: React.FC = () => {
-  const frame = useCurrentFrame();
-  return (
-    <AbsoluteFill
-      style={{
-        backgroundColor: "#141414",
-        color: "#f4f1ea",
-        fontFamily: "sans-serif",
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <div style={{ fontSize: 72, fontWeight: 700 }}>TalkCut</div>
-      <div style={{ marginTop: 16, fontSize: 28, opacity: 0.75 }}>
-        motion-pack stub · frame {frame}
-      </div>
-    </AbsoluteFill>
-  );
+const fallback: MotionProps = {
+  durationInFrames: 90,
+  fps: 30,
+  videoFile: "video.mp4",
+  musicFile: null,
+  fontFile: "fonts/cjk.ttf",
+  captions: [{text: "先把三秒说清", start: 0, end: 2.4, emphasis: "hook", keywords: ["三"]}],
+  beats: [0, 0.6, 1.2],
+  nameplate: null,
+  theme: clean as MotionProps["theme"],
+  title: "先把三秒说清",
 };
 
-/** Vertical 9:16 placeholder. Real caption and BGM presets replace this composition. */
+const duration = ({props}: {props: MotionProps}) => ({
+  durationInFrames: Math.max(1, Math.round(props.durationInFrames)),
+});
+
 export const RemotionRoot: React.FC = () => {
   return (
-    <Composition
-      id="TalkCutPlaceholder"
-      component={Placeholder}
-      durationInFrames={90}
-      fps={30}
-      width={1080}
-      height={1920}
-    />
+    <>
+      <Composition
+        id="clean-knowledge"
+        component={CleanKnowledge}
+        durationInFrames={90}
+        fps={30}
+        width={1080}
+        height={1920}
+        defaultProps={fallback}
+        calculateMetadata={duration}
+      />
+      <Composition
+        id="gold-line"
+        component={GoldLine}
+        durationInFrames={90}
+        fps={30}
+        width={1080}
+        height={1920}
+        defaultProps={fallback}
+        calculateMetadata={duration}
+      />
+      <Composition
+        id="cover-still"
+        component={CoverStill}
+        durationInFrames={1}
+        fps={30}
+        width={1080}
+        height={1920}
+        defaultProps={fallback}
+      />
+    </>
   );
 };

@@ -31,11 +31,16 @@ def main() -> int:
     print(f"气口样例  {breath['video']}")
     print(f"填充词样例 {filler['video']}")
     print()
-    print("气口 / 静音（默认能量分段，不下载语音模型）：")
-    print(f"  python3 pipeline/cli/talkcut.py import --video {breath['video']} --project {folder}/breath-project")
+    print("气口样例可以叠合成中文字幕。文稿时间对齐蜂鸣，不下载语音模型：")
+    print(
+        f"  python3 pipeline/cli/talkcut.py import --video {breath['video']} "
+        f"--project {folder}/breath-project --transcript examples/demo-caption-words.json"
+    )
     print(f"  python3 pipeline/cli/talkcut.py read --project {folder}/breath-project")
-    print("  # 把 read 打印的 revision 填进 changes JSON，confirmed 必须为 true，cleanup 打开 breath/filler/silence")
+    print("  # changes.json：revision 用 read 的值，confirmed 为 true，cleanup 打开 breath/silence")
     print(f"  python3 pipeline/cli/talkcut.py apply --project {folder}/breath-project --changes changes.json")
+    print(f"  python3 pipeline/cli/talkcut.py motion --project {folder}/breath-project --preset clean-knowledge")
+    print(f"  python3 pipeline/cli/talkcut.py motion --project {folder}/breath-project --preset gold-line --music <你的BGM>")
     print(f"  python3 pipeline/cli/talkcut.py export --project {folder}/breath-project")
     print()
     print("逐词去掉「嗯」（文稿时间，响度仍然很大）：")

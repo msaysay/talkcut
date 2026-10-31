@@ -113,7 +113,16 @@ python3 pipeline/cli/talkcut.py export \
 
 成片在工程的 `export/final.mp4`。能量分段没有语义文稿，片段文字是 `口播N`、`〔气口〕`、`〔静音〕`。已有逐词时间时用 `--transcript words.json`。需要识别时再 `setup --with-asr`，然后 `import --asr whisper`（首次会下载模型）。
 
-`propose` 只写方向，不导出。`motion` 只记下 Remotion 钩子。动效包仍然可以单独 `npm install`。
+`propose` 只写方向，不导出。粗剪用默认的 `export`。竖屏字幕和配乐：
+
+```bash
+cd motion-pack && npm install && cd ..
+python3 pipeline/cli/talkcut.py motion \
+  --project examples/out/breath-project \
+  --preset clean-knowledge
+```
+
+需要公司使用 Remotion 时，先看 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。更大的营利组织需要 Remotion 公司许可证。
 
 ## 许可
 
