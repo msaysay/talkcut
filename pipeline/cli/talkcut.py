@@ -288,7 +288,7 @@ def build_parser() -> argparse.ArgumentParser:
     motion.add_argument("--project", required=True)
     motion.add_argument("--preset", required=True, help="clean-knowledge 或 gold-line")
     motion.add_argument("--orientation", choices=["vertical", "landscape"], default="vertical")
-    motion.add_argument("--music", help="用户自带的 BGM 文件；省略则生成节拍底乐")
+    motion.add_argument("--music", help="用户自带的 BGM；省略则不配乐，只保留人声")
     motion.add_argument("--bpm", type=float, help="节拍；省略时从配乐检测")
     motion.add_argument("--lock", action="store_true", help="把该预设写进 presets/approved.json")
     motion.add_argument("--layout", help="整段使用一个版式，例如 v2 或 h4")

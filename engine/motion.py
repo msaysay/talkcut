@@ -9,9 +9,9 @@ import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
-from engine.beats import beats_from_bpm, detect_beats, write_drum_bed
+from engine.beats import beats_from_bpm, detect_beats
 from engine.errors import TalkCutError
-from engine.media import load_pcm
+from engine.media import load_pcm, probe
 from engine.pipeline import export_movie
 from engine.runtime import require_ffmpeg
 from engine.store import load, save
@@ -28,6 +28,9 @@ CTA = re.compile(r"评论|私信|关注|预约|置顶")
 NUMBER = re.compile(r"\d+|[零〇一二三四五六七八九十]+")
 GOLD = re.compile(r"真正|往往|别再|金句")
 LIST = re.compile(r"^(?:[1-9][.、]|第[一二三])")
+PHRASE_LIMIT = 18
+MIN_PHRASE = 0.04
+PHRASE_BREAK = re.compile(r"[，。！？、；,.!?\n]|…+|——+|—+|～+")
 
 
 def list_presets() -> list[dict]:
@@ -47,6 +50,91 @@ def load_preset(name: str) -> dict:
             return preset
     known = ", ".join(item["id"] for item in list_presets()) or "（无）"
     raise TalkCutError(f"没有预设 {name}。可选：{known}")
+
+
+def _phrase_parts(text: str) -> list[str]:
+    raw = [part.strip() for part in PHRASE_BREAK.split(text) if part and part.strip()]
+    if not raw and text.strip():
+        raw = [text.strip()]
+    parts: list[str] = []
+    for chunk in raw:
+        if len(chunk) <= PHRASE_LIMIT:
+            parts.append(chunk)
+        else:
+            parts.extend(chunk[index : index + PHRASE_LIMIT] for index in range(0, len(chunk), PHRASE_LIMIT))
+    return parts
+
+
+def _coalesce(parts: list[str], count: int) -> list[str]:
+    if count <= 1 or not parts:
+        return ["".join(parts)] if parts else []
+    total = sum(len(part) for part in parts)
+    target = total / count
+    groups: list[str] = []
+    buffer = ""
+    filled = 0
+    for part in parts:
+        if buffer and filled >= target and len(groups) < count - 1:
+            groups.append(buffer)
+            buffer = part
+            filled = len(part)
+        else:
+            buffer += part
+            filled += len(part)
+    if buffer:
+        groups.append(buffer)
+    while len(groups) > count:
+        groups[-2] += groups[-1]
+        groups.pop()
+    return groups
+
+
+def _unoverlap(pieces: list[dict]) -> list[dict]:
+    cleaned: list[dict] = []
+    for piece in pieces:
+        start = float(piece["start"])
+        end = float(piece["end"])
+        if cleaned and start < float(cleaned[-1]["end"]):
+            start = float(cleaned[-1]["end"])
+        if end - start < MIN_PHRASE:
+            continue
+        item = dict(piece)
+        item["start"] = round(start, 3)
+        item["end"] = round(end, 3)
+        if item["end"] <= item["start"]:
+            continue
+        cleaned.append(item)
+    return cleaned
+
+
+def split_caption_phrases(captions: list[dict]) -> list[dict]:
+    """Split plan and edit captions on punctuation, pauses, and length.
+
+    Each piece keeps a slice of the parent interval. Adjacent pieces never overlap.
+    """
+    pieces: list[dict] = []
+    for caption in captions:
+        text = str(caption.get("text") or "").strip()
+        start = float(caption["start"])
+        end = float(caption["end"])
+        span = end - start
+        if not text or span < MIN_PHRASE:
+            continue
+        parts = _phrase_parts(text)
+        if not parts:
+            continue
+        max_parts = max(1, int(span / MIN_PHRASE))
+        if len(parts) > max_parts:
+            parts = _coalesce(parts, max_parts)
+        weights = [max(1, len(part)) for part in parts]
+        total = sum(weights)
+        cursor = start
+        for index, (part, weight) in enumerate(zip(parts, weights)):
+            piece_end = end if index == len(parts) - 1 else cursor + span * weight / total
+            keywords = [token for token in (caption.get("keywords") or []) if token and token in part]
+            pieces.append({**caption, "text": part, "start": cursor, "end": piece_end, "keywords": keywords})
+            cursor = piece_end
+    return _unoverlap(pieces)
 
 
 def keywords_in(text: str) -> list[str]:
@@ -113,6 +201,7 @@ def captions_from_edit(project: dict, preset_id: str) -> list[dict]:
                 "keywords": keywords_in(row["text"]),
             }
         )
+    captions = split_caption_phrases(captions)
     if not captions:
         raise TalkCutError("粗剪里没有可上屏的字幕。")
     return captions
@@ -128,14 +217,16 @@ def _find_font() -> Path:
     raise TalkCutError("找不到中文字体。安装 fonts-droid-fallback，或设置 TALKCUT_FONT 指向一个 .ttf。")
 
 
-def _music_track(folder: Path, duration: float, music: Path | None, bpm: float | None, ffmpeg: str) -> tuple[Path, list[float], float]:
+def _music_track(
+    folder: Path, duration: float, music: Path | None, bpm: float | None, ffmpeg: str
+) -> tuple[Path | None, list[float], float | None]:
     public = folder / "motion" / "public"
     public.mkdir(parents=True, exist_ok=True)
-    target = public / "music.wav"
     if music is None:
-        rate = bpm or 96
-        beats = write_drum_bed(target, duration, bpm=rate)
-        return target, beats, float(rate)
+        if bpm:
+            return None, beats_from_bpm(duration, bpm), float(bpm)
+        return None, [], None
+    target = public / "music.wav"
     source = Path(music).expanduser().resolve()
     if not source.is_file():
         raise TalkCutError(f"找不到配乐：{source}")
@@ -209,7 +300,7 @@ def build_props(project: dict, preset: dict, beats: list[float], duration: float
         "height": int(preset.get("height") or 1920),
         "orientation": "landscape" if int(preset.get("width") or 1080) > int(preset.get("height") or 1920) else "vertical",
         "videoFile": "video.mp4",
-        "musicFile": "music.wav",
+        "musicFile": None,
         "fontFile": "fonts/cjk.ttf",
         "fontFiles": {},
         "captions": captions,
@@ -256,7 +347,7 @@ def segments_from_plan(plan: dict, zones: dict | None = None) -> tuple[list[dict
                 "start": item["start"],
                 "end": item["end"],
                 "title": item.get("roleLabel") or item["layout"],
-                "body": item["text"],
+                "body": "",
                 "caption": item["text"],
                 "captionAnchor": anchor,
                 "face": face,
@@ -273,7 +364,7 @@ def segments_from_plan(plan: dict, zones: dict | None = None) -> tuple[list[dict
                 "effects": item.get("effects") or [],
             }
         )
-    return segments, captions
+    return segments, split_caption_phrases(captions)
 
 
 def render_from_plan(
@@ -293,18 +384,32 @@ def render_from_plan(
     if not video.is_file():
         raise TalkCutError("计划里的视频不存在。plan 时加上 --video，或改 layout-plan.json 里的 video。")
     preset = apply_orientation(load_preset(preset_name), orientation)
-    ffmpeg, _ffprobe = require_ffmpeg()
+    ffmpeg, ffprobe = require_ffmpeg()
     duration = float(plan["duration"])
     public = folder / "motion" / "public"
     if public.exists():
         shutil.rmtree(public)
     public.mkdir(parents=True)
     trimmed = public / "video.mp4"
-    subprocess.run(
-        [ffmpeg, "-y", "-v", "error", "-i", str(video), "-t", f"{duration:.3f}", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-an", str(trimmed)],
-        check=True,
-        capture_output=True,
-    )
+    info = probe(ffprobe, video)
+    command = [
+        ffmpeg,
+        "-y",
+        "-v",
+        "error",
+        "-i",
+        str(video),
+        "-t",
+        f"{duration:.3f}",
+        "-c:v",
+        "libx264",
+        "-pix_fmt",
+        "yuv420p",
+    ]
+    if info["hasAudio"]:
+        command.extend(["-c:a", "aac", "-b:a", "160k"])
+    command.append(str(trimmed))
+    subprocess.run(command, check=True, capture_output=True)
     zones = None
     try:
         models = detected_models()
@@ -342,8 +447,8 @@ def render_from_plan(
     except TalkCutError:
         role_fonts = {}
     font_files = copy_role_fonts(public, role_fonts)
-    rate = bpm or float(plan.get("bpm") or 96)
-    _music_track(folder, duration, music, rate, ffmpeg)
+    track, music_beats, detected = _music_track(folder, duration, music, bpm, ffmpeg)
+    rate = detected or bpm or float(plan.get("bpm") or 96)
     fps = int(preset.get("fps") or 30)
     props = {
         "durationInFrames": max(1, int(round(duration * fps))),
@@ -352,11 +457,11 @@ def render_from_plan(
         "height": int(preset.get("height") or 1920),
         "orientation": orientation,
         "videoFile": "video.mp4",
-        "musicFile": "music.wav",
+        "musicFile": "music.wav" if track else None,
         "fontFile": font_files.get("fallback") or "fonts/cjk.ttf",
         "fontFiles": font_files,
         "captions": captions,
-        "beats": plan.get("beats") or beats_from_bpm(duration, rate),
+        "beats": plan.get("beats") or music_beats or beats_from_bpm(duration, rate),
         "nameplate": None,
         "theme": preset,
         "title": (captions[0]["text"][:18] if captions else preset.get("name") or ""),
@@ -440,8 +545,9 @@ def render_motion(
     except TalkCutError:
         role_fonts = {}
     font_files = copy_role_fonts(public, role_fonts)
-    _track, beats, detected_bpm = _music_track(folder, duration, music, bpm, ffmpeg)
+    track, beats, detected_bpm = _music_track(folder, duration, music, bpm, ffmpeg)
     props = build_props(project, preset, beats, duration)
+    props["musicFile"] = "music.wav" if track else None
     props["fontFiles"] = font_files
     if font_files.get("fallback"):
         props["fontFile"] = font_files["fallback"]
@@ -478,8 +584,8 @@ def render_motion(
         "width": preset.get("width"),
         "height": preset.get("height"),
         "beats": len(beats),
-        "music": "generated-bed" if music is None else str(Path(music).resolve()),
-        "ducking": True,
+        "music": None if track is None else str(Path(music).resolve()),
+        "ducking": track is not None,
     }
     project = load(folder)
     project["motion"] = record

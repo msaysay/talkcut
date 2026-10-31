@@ -32,9 +32,20 @@ const sizeFor = (props: MotionProps, emphasis: Caption["emphasis"], scale: numbe
   return Math.round(base * scale);
 };
 
+const CAPTION_CHARS = 18;
+const EXIT_FRAMES = 6;
+
 const revealCount = (text: string, local: number, fps: number) => {
   const framesPerChar = Math.max(1, Math.round(fps / 18));
   return Math.min(text.length, Math.floor(local / framesPerChar) + 1);
+};
+
+const latest = (items: Caption[], key: "start" | "end") => {
+  let best: Caption | undefined;
+  for (const item of items) {
+    if (!best || item[key] >= best[key]) best = item;
+  }
+  return best;
 };
 
 const NumberRoll: React.FC<{value: number; progress: number}> = ({value, progress}) => {
@@ -46,10 +57,27 @@ export const CaptionLayer: React.FC<{props: MotionProps; layout: string}> = ({pr
   const frame = useCurrentFrame();
   const {width, height, fps} = useVideoConfig();
   const time = frame / fps;
-  const caption = props.captions.find((item) => time >= item.start && time < item.end);
+  const active = latest(
+    props.captions.filter((item) => time >= item.start && time < item.end),
+    "start",
+  );
+  const exitWindow = EXIT_FRAMES / fps;
+  const leaving = active
+    ? undefined
+    : latest(
+        props.captions.filter((item) => time >= item.end && time - item.end < exitWindow),
+        "end",
+      );
+  const caption = active ?? leaving;
   if (!caption) return null;
-  const local = frame - Math.round(caption.start * fps);
-  const fade = interpolate(local, [0, 5], [0, 1], {extrapolateLeft: "clamp", extrapolateRight: "clamp"});
+  const local = active
+    ? frame - Math.round(caption.start * fps)
+    : Math.round((caption.end - caption.start) * fps);
+  const fadeIn = interpolate(local, [0, 5], [0, 1], {extrapolateLeft: "clamp", extrapolateRight: "clamp"});
+  const fadeOut = leaving
+    ? interpolate(time - caption.end, [0, exitWindow], [1, 0], {extrapolateLeft: "clamp", extrapolateRight: "clamp"})
+    : 1;
+  const fade = fadeIn * fadeOut;
   const scale = height / (width > height ? 1080 : 1920);
   const size = sizeFor(props, caption.emphasis, scale);
   const margins = marginsOf(props.theme);
@@ -57,7 +85,8 @@ export const CaptionLayer: React.FC<{props: MotionProps; layout: string}> = ({pr
   const anchor = segment?.captionAnchor ?? "bottom";
   const bottom = Math.max((props.theme.caption.bottom / 1920) * height, margins.douyinBottom * height);
   const right = margins.douyinRight * width;
-  const shown = caption.text.slice(0, revealCount(caption.text, local, fps));
+  const limited = caption.text.slice(0, CAPTION_CHARS);
+  const shown = limited.slice(0, revealCount(limited, local, fps));
   const effects = caption.effects ?? [];
   const slash = caption.emphasis === "hook" || effects.includes("slash-in") ? interpolate(local, [0, 8], [100, 0], {extrapolateRight: "clamp"}) : 0;
   const highlight = interpolate(local, [4, 12], [0, 1], {extrapolateLeft: "clamp", extrapolateRight: "clamp"});
@@ -104,6 +133,7 @@ export const CaptionLayer: React.FC<{props: MotionProps; layout: string}> = ({pr
             fontSize: size,
             fontWeight: 700,
             lineHeight: 1.2,
+            whiteSpace: "nowrap",
             color: props.theme.colors.ink,
             WebkitTextStroke: `2px ${props.theme.colors.stroke}`,
             paintOrder: "stroke fill",

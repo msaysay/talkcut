@@ -28,7 +28,7 @@ def transcribe(path: Path, model_size: str = "small") -> list[dict]:
     from faster_whisper import WhisperModel
 
     model = WhisperModel(model_size, device="cpu", compute_type="int8")
-    segments, _info = model.transcribe(str(path), word_timestamps=True, vad_filter=True)
+    segments, _info = model.transcribe(str(path), language="zh", word_timestamps=True, vad_filter=True)
     words: list[dict] = []
     for segment in segments:
         timed = list(segment.words or [])

@@ -20,9 +20,11 @@ const Card: React.FC<{title: string; body: string; theme: Theme; note?: string}>
     <div style={{fontFamily: "TC Cover, TC Hook, TC Body, TC Fallback, sans-serif", fontSize: "0.9em", letterSpacing: 2, color: theme.colors.accent}}>
       {title}
     </div>
-    <div style={{fontFamily: "TC Hook, TC Body, TC Fallback, sans-serif", fontSize: "1.7em", fontWeight: 700, lineHeight: 1.25, marginTop: "0.35em"}}>
-      {body}
-    </div>
+    {body ? (
+      <div style={{fontFamily: "TC Hook, TC Body, TC Fallback, sans-serif", fontSize: "1.7em", fontWeight: 700, lineHeight: 1.25, marginTop: "0.35em"}}>
+        {body}
+      </div>
+    ) : null}
     {note ? (
       <div style={{fontFamily: "TC Note, TC Fallback, sans-serif", fontSize: "1.05em", marginTop: "0.8em", color: theme.colors.accent}}>
         {note}
@@ -107,9 +109,12 @@ export const Stage: React.FC<{
           </div>
         </div>
         {personFile ? (
-          <Sequence from={from} durationInFrames={Math.max(1, Math.round(((segment?.end ?? 1) - (segment?.start ?? 0)) * fps))}>
-            <OffthreadVideo src={staticFile(personFile)} style={{width: "100%", height: "100%", objectFit: "cover"}} />
-          </Sequence>
+          <>
+            <OffthreadVideo src={staticFile(videoFile)} style={{position: "absolute", width: 1, height: 1, opacity: 0}} />
+            <Sequence from={from} durationInFrames={Math.max(1, Math.round(((segment?.end ?? 1) - (segment?.start ?? 0)) * fps))}>
+              <OffthreadVideo muted src={staticFile(personFile)} style={{width: "100%", height: "100%", objectFit: "cover"}} />
+            </Sequence>
+          </>
         ) : (
           <VideoFill file={videoFile} />
         )}

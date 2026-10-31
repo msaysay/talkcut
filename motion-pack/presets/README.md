@@ -16,4 +16,4 @@ Codex 和 WorkBuddy 改同一份文件即可，不要另起一套流程。满意
 python3 pipeline/cli/talkcut.py motion --project <工程> --preset clean-knowledge --lock
 ```
 
-这会写入 `presets/approved.json`。配乐文件由用户自己提供；省略时只用生成的节拍底乐。
+这会写入 `presets/approved.json`。配乐由 `--music` 提供；省略时不生成节拍底乐。
