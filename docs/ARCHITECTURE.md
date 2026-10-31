@@ -82,6 +82,26 @@ flowchart TD
 
 `setup --fonts` 把 OFL 字体放进 `runtime/fonts`。渲染时拷进工程，CSS 用角色名：`TC Body` 正文、`TC Hook` 钩子、`TC Cover` 封面、`TC Gold` 金句、`TC Number` 数字、`TC Note` 批注、`TC Fallback` 缺字。预设 JSON 的 `fontRoles` 指向这些角色。
 
+### 抖音口播画面
+
+规范写在 `motion-pack/guide.json`，数字落在预设的 `platformMargins`、`caption` 和 `CaptionLayer`。画布 1080×1920、30 帧。底部安全区 0.18–0.20，右侧 0.14，morph 窗底边至少 180px。字幕默认一行、每行不超过 18 字，最多两行，不使用省略号。字幕带中心约在画面 0.65–0.70。淡入约 4 帧。关键词只高亮一个，颜色用 `#8FCBB8`、`#FFB703` 或 `#d4ff2e`。
+
+全屏人脸连续不超过约 11 秒，下一句改为 morph（竖屏 `v3`）或图文。推近用 1.0 / 1.18 / 1.32。圆脸窗直径约 `0.28 × min(宽, 高)`，横屏画中画 360–400px。分屏上半约 0.46 画高。人脸框外扩 18%。
+
+素材角色在 `guide.json`：`script` 文稿、`presenter` 出镜、`subtitles` 字幕、`music` 可选配乐。字幕的 `displayText` 和源句 `text` 分开，只改屏幕上的字。
+
+`card-knowledge` 是深色知识卡。`eva-morph-v` 把全屏人脸收到右下圆角窗。计划的 JSON Schema 在 `pipeline/contracts/layout-plan.schema.json`。先 `motion --stills` 看每句中点，确认后再渲全片。
+
+本机复现：
+
+```bash
+python3 pipeline/cli/talkcut.py plan --project <工程> --orientation vertical --video rough.mp4 --script examples/demo-script.json
+python3 pipeline/cli/talkcut.py motion --project <工程> --preset card-knowledge --orientation vertical --stills
+python3 pipeline/cli/talkcut.py motion --project <工程> --preset card-knowledge --orientation vertical
+```
+
+没有 `rough.mp4` 时，用 `examples/fetch_stock.py` 的 Pexels 口播代替 `--video`。云端样片用的就是这条公开素材，不是用户机器上的粗剪。
+
 ### 可选配乐
 
 `_music_track` 在 `music is None` 时不写文件。`musicFile` 为 null，`OffthreadVideo` 播放粗剪人声。

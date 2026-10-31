@@ -52,24 +52,17 @@ const breakAt = (text: string, perLine: number) => {
   return target;
 };
 
-/** Fit the whole phrase into at most two lines. Shrink the size; never drop characters or add an ellipsis. */
-const fitLines = (text: string, fontSize: number, maxWidth: number, minScale: number) => {
+/** One line up to 18 characters, otherwise two complete lines. Never append an ellipsis. */
+const fitLines = (text: string, fontSize: number, maxWidth: number, minScale: number, charsPerLine: number) => {
+  const per = Math.max(4, charsPerLine);
+  const lines = text.length <= per
+    ? [text]
+    : [text.slice(0, breakAt(text, Math.min(per, text.length - 1))), text.slice(breakAt(text, Math.min(per, text.length - 1)))].filter((line) => line.length > 0);
+  const widest = Math.max(1, ...lines.map((line) => line.length));
+  const fitted = Math.floor(maxWidth / (widest * 1.02));
   const floor = Math.max(28, Math.round(fontSize * minScale));
-  let size = fontSize;
-  while (size >= floor) {
-    const per = Math.max(4, Math.floor(maxWidth / (size * 1.05)));
-    if (text.length <= per) return {lines: [text], size};
-    if (text.length <= per * 2) {
-      const cut = breakAt(text, per);
-      const second = text.slice(cut);
-      if (second.length > 0 && second.length <= per) return {lines: [text.slice(0, cut), second], size};
-    }
-    size -= 2;
-  }
-  const per = Math.max(4, Math.floor(maxWidth / (floor * 1.05)));
-  if (text.length <= per) return {lines: [text], size: floor};
-  const cut = breakAt(text, Math.ceil(text.length / 2));
-  return {lines: [text.slice(0, cut), text.slice(cut)], size: floor};
+  const size = Math.max(floor, Math.min(fontSize, fitted || fontSize));
+  return {lines: lines.slice(0, 2), size};
 };
 
 const NumberRoll: React.FC<{value: number; progress: number}> = ({value, progress}) => {
@@ -100,15 +93,45 @@ const SliceDigit: React.FC<{text: string; progress: number}> = ({text, progress}
   );
 };
 
-const lineBody = (line: string, digit: string | undefined, roll: boolean, slash: boolean, progress: number) => {
-  if (!digit || !line.includes(digit)) return line;
-  const [before, ...after] = line.split(digit);
-  const tail = after.join(digit);
+const lineBody = (
+  line: string,
+  digit: string | undefined,
+  roll: boolean,
+  slash: boolean,
+  progress: number,
+  keyword: string | undefined,
+  color: string,
+) => {
+  const token = keyword && line.includes(keyword) ? keyword : undefined;
+  if (token && digit && token === digit && (roll || slash)) {
+    const at = line.indexOf(digit);
+    return (
+      <>
+        {line.slice(0, at)}
+        <span style={{color}}>
+          {slash ? <SliceDigit text={digit} progress={progress} /> : <NumberRoll value={Number(digit)} progress={progress} />}
+        </span>
+        {line.slice(at + digit.length)}
+      </>
+    );
+  }
+  if (token) {
+    const at = line.indexOf(token);
+    return (
+      <>
+        {line.slice(0, at)}
+        <span style={{color}}>{token}</span>
+        {line.slice(at + token.length)}
+      </>
+    );
+  }
+  if (!digit || !line.includes(digit) || (!roll && !slash)) return line;
+  const at = line.indexOf(digit);
   return (
     <>
-      {before}
-      {slash ? <SliceDigit text={digit} progress={progress} /> : roll ? <NumberRoll value={Number(digit)} progress={progress} /> : digit}
-      {tail}
+      {line.slice(0, at)}
+      {slash ? <SliceDigit text={digit} progress={progress} /> : <NumberRoll value={Number(digit)} progress={progress} />}
+      {line.slice(at + digit.length)}
     </>
   );
 };
@@ -137,21 +160,24 @@ export const CaptionLayer: React.FC<{props: MotionProps; layout: string}> = ({pr
     : 1;
   const fade = fadeIn * fadeOut;
   const scale = height / (width > height ? 1080 : 1920);
-  const tight = props.theme.motion === "settle" || props.theme.motion === "slash";
+  const tight = props.theme.motion === "settle" || props.theme.motion === "slash" || props.theme.motion === "morph";
   const margins = marginsOf(props.theme);
   const segment = (props.segments ?? []).find((item) => time >= item.start && time < item.end);
   const anchor = segment?.captionAnchor ?? "bottom";
+  const bandCenter = props.theme.caption.bandCenter;
+  const useBand = anchor === "bottom" && typeof bandCenter === "number";
   const bottom = Math.max((props.theme.caption.bottom / 1920) * height, margins.douyinBottom * height);
   const left = props.theme.caption.side * (width / 1080);
   const right = Math.max(props.theme.caption.side * (width / 1080), margins.douyinRight * width);
   const padX = tight ? 18 : 26;
   const maxWidth = Math.max(160, width - left - right - padX * 2);
-  const minScale = props.theme.caption.minScale ?? 0.72;
-  const fitted = fitLines(caption.text, sizeFor(props, caption.emphasis, scale), maxWidth, minScale);
+  const minScale = props.theme.caption.minScale ?? 0.9;
+  const spoken = caption.displayText || caption.text;
+  const fitted = fitLines(spoken, sizeFor(props, caption.emphasis, scale), maxWidth, minScale, props.theme.caption.charsPerLine ?? 18);
   const effects = caption.effects ?? [];
   const rise = tight ? interpolate(local, [0, 6], [10, 0], {extrapolateLeft: "clamp", extrapolateRight: "clamp"}) : 0;
-  const highlight = interpolate(local, [2, 8], [0, 1], {extrapolateLeft: "clamp", extrapolateRight: "clamp"});
   const digit = caption.keywords.find((item) => /^\d+$/.test(item));
+  const keyword = caption.keywords.find((item) => item && spoken.includes(item));
   const slashNumber = props.theme.motion === "slash" && Boolean(digit);
   const roll = !slashNumber && Boolean(digit) && (caption.emphasis === "number" || effects.includes("number-roll"));
   const progress = Math.min(1, local / (fps * (slashNumber ? 0.35 : 0.45)));
@@ -164,12 +190,12 @@ export const CaptionLayer: React.FC<{props: MotionProps; layout: string}> = ({pr
         position: "absolute",
         left,
         right,
-        bottom: anchor === "bottom" ? bottom : undefined,
-        top: anchor === "middle" ? height * 0.22 : anchor === "top" ? height * 0.08 : undefined,
+        bottom: !useBand && anchor === "bottom" ? bottom : undefined,
+        top: useBand ? `${bandCenter * 100}%` : anchor === "middle" ? height * 0.22 : anchor === "top" ? height * 0.08 : undefined,
         opacity: fade,
         display: "flex",
         justifyContent: "center",
-        transform: `translateY(${rise}px)`,
+        transform: useBand ? `translateY(calc(-50% + ${rise}px))` : `translateY(${rise}px)`,
         overflow: "visible",
       }}
     >
@@ -202,47 +228,16 @@ export const CaptionLayer: React.FC<{props: MotionProps; layout: string}> = ({pr
             paintOrder: "stroke fill",
           }}
         >
-          {tight ? (
-            <span
-              style={{
-                position: "absolute",
-                left: "8%",
-                right: "8%",
-                bottom: "0.02em",
-                height: "0.28em",
-                background: props.theme.colors.accent,
-                opacity: 0.9,
-                transform: `scaleX(${highlight})`,
-                transformOrigin: "left center",
-                zIndex: 0,
-              }}
-            />
-          ) : (
-            caption.keywords.filter((item) => !/^\d+$/.test(item)).map((word) => (
-              <span
-                key={word}
-                style={{
-                  position: "absolute",
-                  left: "8%",
-                  right: "8%",
-                  bottom: "0.05em",
-                  height: "0.38em",
-                  background: props.theme.colors.accent,
-                  opacity: 0.85,
-                  transform: `scaleX(${highlight})`,
-                  transformOrigin: "left center",
-                  zIndex: 0,
-                }}
-              />
-            ))
-          )}
           <span style={{position: "relative", zIndex: 1}}>
-            {fitted.lines.map((line, index) => (
-              <React.Fragment key={`${line}-${index}`}>
-                {index > 0 ? "\n" : null}
-                {lineBody(line, digit, roll, Boolean(slashNumber), progress)}
-              </React.Fragment>
-            ))}
+            {fitted.lines.map((line, index) => {
+              const earlier = fitted.lines.slice(0, index).some((item) => keyword && item.includes(keyword));
+              return (
+                <React.Fragment key={`${line}-${index}`}>
+                  {index > 0 ? "\n" : null}
+                  {lineBody(line, digit, roll, Boolean(slashNumber), progress, earlier ? undefined : keyword, props.theme.colors.accent)}
+                </React.Fragment>
+              );
+            })}
           </span>
         </div>
       </div>

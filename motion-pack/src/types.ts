@@ -2,6 +2,8 @@ export type Emphasis = "hook" | "body" | "number" | "gold" | "cta" | "list";
 
 export type Caption = {
   text: string;
+  displayText?: string;
+  sourceText?: string;
   start: number;
   end: number;
   emphasis: Emphasis;
@@ -28,7 +30,7 @@ export type Theme = {
   compositionId: string;
   coverCompositionId?: string;
   name: string;
-  motion: "fade" | "beat-punch" | "settle" | "slash";
+  motion: "fade" | "beat-punch" | "settle" | "slash" | "morph";
   aesthetic?: string;
   fps: number;
   width: number;
@@ -50,6 +52,8 @@ export type Theme = {
     ctaSize: number;
     listSize: number;
     maxLines?: number;
+    charsPerLine?: number;
+    bandCenter?: number;
     minScale?: number;
   };
   music: {
@@ -81,4 +85,6 @@ export type MotionProps = {
   segments?: LayoutSegment[];
   personFile?: string | null;
   personFrom?: number;
+  sfxCues?: {at: number; id: string}[];
+  audio?: "voice-led";
 };

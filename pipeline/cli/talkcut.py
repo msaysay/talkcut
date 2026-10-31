@@ -64,6 +64,10 @@ SCAFFOLD_FILES = [
     "motion-pack/presets/gold-line/preset.json",
     "motion-pack/presets/opus-clean/preset.json",
     "motion-pack/presets/opus-punch/preset.json",
+    "motion-pack/presets/card-knowledge/preset.json",
+    "motion-pack/presets/eva-morph-v/preset.json",
+    "motion-pack/guide.json",
+    "pipeline/contracts/layout-plan.schema.json",
     "THIRD_PARTY_NOTICES.md",
 ]
 
@@ -229,6 +233,7 @@ def command_motion(args: argparse.Namespace) -> int:
             lock=args.lock,
             orientation=args.orientation,
             layout=args.layout,
+            stills=args.stills,
         )
     )
     return 0
@@ -288,7 +293,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     motion = sub.add_parser("motion", help="用 Remotion 预设渲染竖屏字幕和配乐")
     motion.add_argument("--project", required=True)
-    motion.add_argument("--preset", required=True, help="opus-clean、opus-punch、clean-knowledge 或 gold-line")
+    motion.add_argument("--preset", required=True, help="card-knowledge、eva-morph-v、opus-clean、opus-punch、clean-knowledge 或 gold-line")
+    motion.add_argument("--stills", action="store_true", help="只渲每句中点静帧，确认后再去掉这个参数渲全片")
     motion.add_argument("--orientation", choices=["vertical", "landscape"], default="vertical")
     motion.add_argument("--music", help="用户自带的 BGM；省略则不配乐，只保留人声")
     motion.add_argument("--bpm", type=float, help="节拍；省略时从配乐检测")

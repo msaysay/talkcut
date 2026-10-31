@@ -28,7 +28,8 @@ CTA = re.compile(r"评论|私信|关注|预约|置顶")
 NUMBER = re.compile(r"\d+|[零〇一二三四五六七八九十]+")
 GOLD = re.compile(r"真正|往往|别再|金句")
 LIST = re.compile(r"^(?:[1-9][.、]|第[一二三])")
-TWO_LINE_LIMIT = 24
+LINE_CHARS = 18
+TWO_LINE_LIMIT = LINE_CHARS * 2
 MIN_PHRASE = 0.04
 PHRASE_BREAK = re.compile(r"[，。！？、；,.!?\n]|…+|——+|—+|～+")
 PAUSE_CHARS = set("的了是在和就也要把被而与或及对给")
@@ -166,7 +167,17 @@ def split_caption_phrases(captions: list[dict]) -> list[dict]:
         for index, (part, weight) in enumerate(zip(parts, weights)):
             piece_end = end if index == len(parts) - 1 else cursor + span * weight / total
             keywords = [token for token in (caption.get("keywords") or []) if token and token in part]
-            pieces.append({**caption, "text": part, "start": cursor, "end": piece_end, "keywords": keywords})
+            pieces.append(
+                {
+                    **caption,
+                    "text": part,
+                    "displayText": part,
+                    "sourceText": str(caption.get("sourceText") or caption.get("text") or part),
+                    "start": cursor,
+                    "end": piece_end,
+                    "keywords": keywords,
+                }
+            )
             cursor = piece_end
     return _unoverlap(pieces)
 
@@ -386,14 +397,16 @@ def segments_from_plan(plan: dict, zones: dict | None = None) -> tuple[list[dict
                 "end": item["end"],
                 "title": item.get("roleLabel") or item["layout"],
                 "body": "",
-                "caption": item["text"],
+                "caption": item.get("displayText") or item["text"],
                 "captionAnchor": anchor,
                 "face": face,
             }
         )
         captions.append(
             {
-                "text": item["text"],
+                "text": item.get("displayText") or item["text"],
+                "displayText": item.get("displayText") or item["text"],
+                "sourceText": item["text"],
                 "start": item["start"],
                 "end": item["end"],
                 "emphasis": item.get("emphasis") or "body",
@@ -414,6 +427,7 @@ def render_from_plan(
     bpm: float | None = None,
     lock: bool = False,
     orientation: str = "vertical",
+    stills: bool = False,
 ) -> dict:
     plan = json.loads(plan_path.read_text(encoding="utf-8"))
     if plan.get("orientation") != orientation:
@@ -506,17 +520,22 @@ def render_from_plan(
         "segments": segments,
         "personFile": "person.mp4" if person_file else None,
         "personFrom": person_from,
+        "sfxCues": [{"at": item["start"], "id": "cut"} for item in plan["items"][1:]],
+        "audio": "voice-led",
     }
     props_path = folder / "motion" / "props.json"
     props_path.write_text(json.dumps(props, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     export_dir = folder / "export"
     out = export_dir / f"motion-{preset['id']}{'' if orientation == 'vertical' else '-landscape'}.mp4"
-    _run_remotion("render", preset["compositionId"], out, props_path, public, crf=28)
+    still_paths = _render_stills(preset["compositionId"], props, props_path, public, export_dir / "stills") if stills else []
+    if not stills:
+        _run_remotion("render", preset["compositionId"], out, props_path, public, crf=28)
     record = {
         "applied": True,
         "fromPlan": str(plan_path),
         "preset": preset["id"],
-        "movie": str(out),
+        "movie": None if stills else str(out),
+        "stills": still_paths,
         "orientation": orientation,
         "width": props["width"],
         "height": props["height"],
@@ -544,6 +563,7 @@ def render_motion(
     lock: bool = False,
     orientation: str = "vertical",
     layout: str | None = None,
+    stills: bool = False,
 ) -> dict:
     folder = Path(folder).expanduser().resolve()
     planned = plan_path_for(folder, orientation)
@@ -556,6 +576,7 @@ def render_motion(
             bpm=bpm,
             lock=lock,
             orientation=orientation,
+            stills=stills,
         )
     preset = apply_orientation(load_preset(preset_name), orientation)
     ffmpeg, _ffprobe = require_ffmpeg()
@@ -661,7 +682,33 @@ def render_with_props(composition: str, dest: Path, props_path: Path, public: Pa
     _run_remotion("render", composition, dest, props_path, public)
 
 
-def _run_remotion(kind: str, composition: str, dest: Path, props_path: Path, public: Path, crf: int | None = None) -> None:
+def _render_stills(composition: str, props: dict, props_path: Path, public: Path, dest_dir: Path) -> list[str]:
+    fps = int(props.get("fps") or 30)
+    last = max(0, int(props.get("durationInFrames") or 1) - 1)
+    written = []
+    seen = set()
+    for item in props.get("segments") or []:
+        mid = (float(item["start"]) + float(item["end"])) / 2
+        frame = max(0, min(last, int(round(mid * fps))))
+        if frame in seen:
+            continue
+        seen.add(frame)
+        name = f"{item.get('layout') or 'frame'}-{frame}.png"
+        dest = dest_dir / name
+        _run_remotion("still", composition, dest, props_path, public, frame=frame)
+        written.append(str(dest))
+    return written
+
+
+def _run_remotion(
+    kind: str,
+    composition: str,
+    dest: Path,
+    props_path: Path,
+    public: Path,
+    crf: int | None = None,
+    frame: int | None = None,
+) -> None:
     if not (PACK / "node_modules" / "remotion").is_dir():
         raise TalkCutError("motion-pack 依赖未安装。在 motion-pack/ 执行 npm install。")
     dest.parent.mkdir(parents=True, exist_ok=True)
@@ -679,6 +726,8 @@ def _run_remotion(kind: str, composition: str, dest: Path, props_path: Path, pub
     ]
     if crf is not None and kind == "render":
         command.append(f"--crf={crf}")
+    if frame is not None and kind == "still":
+        command.append(f"--frame={frame}")
     try:
         completed = subprocess.run(command, cwd=PACK, capture_output=True, text=True, timeout=300)
     except subprocess.TimeoutExpired as exc:

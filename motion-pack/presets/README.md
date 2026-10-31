@@ -4,13 +4,46 @@
 
 | 文件夹 | 合成 id | 动效 | 说明 |
 |---|---|---|---|
-| `opus-clean/` | `opus-clean` | `settle` | 紧凑知识口播。字幕两行内完整落下，钩子、正文、数字用不同字体角色 |
-| `opus-punch/` | `opus-punch` | `slash` | 数字从左右切片砍入后锁成完整数字。金句和钩子仍然整句可读 |
+| `card-knowledge/` | `card-knowledge` | `settle` | 深色知识卡。抖音安全区和字幕带 |
+| `eva-morph-v/` | `eva-morph-v` | `morph` | 全屏人脸收到右下圆角窗，窗在底部安全区之上 |
+| `opus-clean/` | `opus-clean` | `settle` | 紧凑知识口播。边距和字号按同一套抖音规范 |
+| `opus-punch/` | `opus-punch` | `slash` | 数字砍入。关键词色 `#FFB703` |
 | `clean-knowledge/` | `clean-knowledge` | `fade` | 早一版干净知识口播 |
 | `gold-line/` | `gold-line` | `beat-punch` | 早一版金句。顶栏闪动只在这份预设上 |
 | `cover/` | `cover-still` | — | 标题静帧，各预设共用 |
 
-`opus-clean` 和 `opus-punch` 是当前口播审美。旧的两套预设仍可渲染。
+口播成片优先 `card-knowledge` 或 `opus-clean`。`eva-morph-v` 用来做全屏到人脸窗。旧的两套预设仍可渲染。画面数字在 `motion-pack/guide.json`。
+
+## 抖音画面
+
+画布 1080×1920、30 帧。`platformMargins`：`douyinBottom` 0.19，`douyinRight` 0.14，`maskMinBottomPx` 184，`pipPx` 380。圆脸窗是 `0.28 × min(宽, 高)`。morph 结束约 0.42 宽 × 0.28 高，底边在安全区之上。分屏上半 0.46 画高。
+
+字幕：正文 54–64，钩子 76–84，数字 92–104。默认 1 行、每行最多 18 字，最多 2 行，不补省略号。pill 是 `rgba(10,14,16,0.60)` 这一档。字幕带中心约 0.65–0.70。淡入 4 帧。只高亮一个关键词。
+
+全屏人脸连续超过约 11 秒会改成 morph。横屏推近用 1.0、1.18、1.32。出镜略偏左，视线落在约 0.31 画高。人脸检测框外扩 18%。
+
+人声段配乐 0.12–0.14，间隙 0.40–0.48。默认 voice-led。音效只记在切点 `sfxCues` 上，不铺鼓床。
+
+## 素材角色
+
+`guide.json` 的四个角色：
+
+| 角色 | 是什么 |
+|---|---|
+| `script` | 逐句文稿，例如 `examples/demo-script.json` |
+| `presenter` | 出镜视频。本机粗剪用 `rough.mp4` |
+| `subtitles` | 屏幕字幕。`displayText` 可以和源句 `text` 不同 |
+| `music` | 可选配乐。不传 `--music` 就没有 |
+
+先看静帧再渲全片：
+
+```bash
+python3 pipeline/cli/talkcut.py plan --project <工程> --orientation vertical --video rough.mp4
+python3 pipeline/cli/talkcut.py motion --project <工程> --preset card-knowledge --stills
+python3 pipeline/cli/talkcut.py motion --project <工程> --preset card-knowledge
+```
+
+计划形状见 `pipeline/contracts/layout-plan.schema.json`。
 
 ## 字幕
 

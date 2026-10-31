@@ -10,27 +10,29 @@
   "height": 1920,
   "colors": {
     "ink": "#FFF6E8",
-    "accent": "#FF5A36",
-    "pill": "rgba(18,8,6,0.72)",
+    "accent": "#FFB703",
+    "pill": "rgba(10,14,16,0.60)",
     "stroke": "#140806",
     "badge": "#FFE1D4"
   },
   "caption": {
-    "bottom": 300,
-    "side": 80,
-    "bodySize": 52,
-    "hookSize": 76,
-    "numberSize": 96,
-    "goldSize": 68,
-    "ctaSize": 66,
-    "listSize": 52,
+    "bottom": 360,
+    "side": 72,
+    "bodySize": 58,
+    "hookSize": 80,
+    "numberSize": 100,
+    "goldSize": 64,
+    "ctaSize": 72,
+    "listSize": 58,
     "maxLines": 2,
-    "minScale": 0.72
+    "charsPerLine": 18,
+    "bandCenter": 0.67,
+    "minScale": 0.93
   },
   "music": {
-    "speechVolume": 0.1,
-    "gapVolume": 0.32,
-    "ctaVolume": 0.06
+    "speechVolume": 0.14,
+    "gapVolume": 0.46,
+    "ctaVolume": 0.08
   },
   "maxColors": 3,
   "frames": {
@@ -38,9 +40,9 @@
     "landscape": {"width": 1920, "height": 1080}
   },
   "platformMargins": {
-    "douyinBottom": 0.14,
-    "douyinRight": 0.12,
-    "maskMinBottomPx": 140,
+    "douyinBottom": 0.19,
+    "douyinRight": 0.14,
+    "maskMinBottomPx": 184,
     "pipPx": 380
   },
   "fontRoles": {

@@ -77,11 +77,20 @@ python3 <仓库根>/pipeline/cli/talkcut.py export --project "<工程目录>"
    python3 <仓库根>/pipeline/cli/talkcut.py plan --project "<工程目录>" --classify agent --roles "<工程目录>/classify-result.json"
    ```
 
-7. **motion**  
-   用户确认表格之后再渲染。`motion` 默认读取 `layout-plan.json`。口播预设优先 `opus-clean` 或 `opus-punch`，也可以用 `clean-knowledge` 或 `gold-line`。
+7. **先看静帧，再渲全片**  
+   用户确认 `layout-plan.json` 之后，先出每句中点的静帧。计划形状见 `pipeline/contracts/layout-plan.schema.json`。口播预设优先 `card-knowledge` 或 `opus-clean`，人脸窗用 `eva-morph-v`，也可以用 `opus-punch`、`clean-knowledge` 或 `gold-line`。
 
    ```text
-   python3 <仓库根>/pipeline/cli/talkcut.py motion --project "<工程目录>" --preset clean-knowledge --orientation vertical --music "<用户的BGM>"
+   python3 <仓库根>/pipeline/cli/talkcut.py motion --project "<工程目录>" --preset card-knowledge --orientation vertical --stills
+   ```
+
+   把 `export/stills/` 给用户看。用户确认后再去掉 `--stills` 渲全片。不要跳过静帧直接交成片。
+
+8. **motion**  
+   `motion` 默认读取 `layout-plan.json`。
+
+   ```text
+   python3 <仓库根>/pipeline/cli/talkcut.py motion --project "<工程目录>" --preset card-knowledge --orientation vertical
    ```
 
    `--orientation landscape` 是 1920×1080。这些预设都要能用这两种画幅。用户没给音乐就不要编造曲目，省略 `--music`，也不要生成节拍器。人声段配乐会自动变小。用户认可后加 `--lock`。
@@ -93,10 +102,10 @@ python3 <仓库根>/pipeline/cli/talkcut.py export --project "<工程目录>"
    python3 <仓库根>/pipeline/cli/talkcut.py motion --project "<工程目录>" --preset clean-knowledge --orientation vertical --reel --video "<下载的 mp4>"
    ```
 
-8. **cover**  
+9. **cover**  
    需要封面时再做。公式是关键词 + 数字 + 人。人物约占画面三分之二。关掉画面标题不等于默许封面标题。
 
-9. **export**  
+10. **export**  
    默认用 FFmpeg 导出粗剪，路径是 `export/final.mp4`。用户要竖屏字幕成片时用 `export --via remotion --preset <名字>`，或直接采用上一步 `motion` 写出的 `export/motion-<preset>.mp4`。给出真实路径。做不到就说明卡在哪一步。
 
 ## 硬规则
@@ -111,6 +120,6 @@ python3 <仓库根>/pipeline/cli/talkcut.py export --project "<工程目录>"
 
 - 语义上的多方向规划。`propose` 只根据气口、静音、填充词和营销钩子给一个方向
 - 语音模型。不运行 `setup --with-asr` 就不会下载
-- 用户没提供的真实配乐。生成的底乐只为卡点预览
+- 用户没提供的真实配乐。省略 `--music` 时没有配乐，也不生成节拍器
 
 这些缺口写在 `engine/README.md`、`docs/ROADMAP.md` 和 `motion-pack/presets/README.md`。

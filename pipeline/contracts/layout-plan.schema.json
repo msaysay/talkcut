@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "talkcut-layout-plan-v1",
+  "title": "TalkCut layout plan",
+  "type": "object",
+  "required": ["version", "orientation", "duration", "items"],
+  "properties": {
+    "version": {"type": "integer"},
+    "orientation": {"enum": ["vertical", "landscape"]},
+    "classify": {"type": "string"},
+    "video": {"type": ["string", "null"]},
+    "duration": {"type": "number", "exclusiveMinimum": 0},
+    "bpm": {"type": "number"},
+    "beats": {"type": "array", "items": {"type": "number"}},
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "text", "start", "end", "role", "layout"],
+        "properties": {
+          "id": {"type": "string"},
+          "text": {"type": "string", "description": "源字幕，跟口播一致"},
+          "displayText": {"type": "string", "description": "屏幕上的字。可以和 text 不同，不改声音"},
+          "start": {"type": "number"},
+          "end": {"type": "number"},
+          "role": {"type": "string"},
+          "roleLabel": {"type": "string"},
+          "layout": {"type": "string"},
+          "font": {"type": "string"},
+          "emphasis": {"type": "string"},
+          "effects": {"type": "array", "items": {"type": "string"}},
+          "keywords": {"type": "array", "items": {"type": "string"}, "maxItems": 8},
+          "reason": {"type": "string"}
+        }
+      }
+    }
+  }
+}

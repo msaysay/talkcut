@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
 import tempfile
@@ -102,15 +103,17 @@ class MotionPropsTest(unittest.TestCase):
             [{"text": whole, "start": 1, "end": 4, "emphasis": "body", "keywords": ["一个"]}]
         )
         self.assertEqual([item["text"] for item in kept], [whole])
+        self.assertEqual(kept[0]["displayText"], whole)
         self.assertNotIn("…", kept[0]["text"])
         self.assertNotIn("...", kept[0]["text"])
-        long_text = "我认为一条片子只讲一个判断其余都先放下这句话也要完整读完不能断在半个字上"
+        long_text = "我认为一条片子只讲一个判断其余都先放下这句话也要完整读完不能断在半个字上后面这句也要读完"
         wrapped = split_caption_phrases(
             [{"text": long_text, "start": 1, "end": 6, "emphasis": "body", "keywords": ["一个"]}]
         )
         self.assertGreater(len(wrapped), 1)
         self.assertEqual("".join(item["text"] for item in wrapped), long_text)
-        self.assertTrue(all(len(item["text"]) <= 28 for item in wrapped))
+        self.assertTrue(all(len(item["text"]) <= 40 for item in wrapped))
+        self.assertTrue(all(item["displayText"] == item["text"] for item in wrapped))
         self.assertTrue(all("…" not in item["text"] and "..." not in item["text"] for item in wrapped))
         self.assertIn("一个", "".join(item["text"] for item in wrapped))
         overlapping = split_caption_phrases(
@@ -171,11 +174,48 @@ class MotionPropsTest(unittest.TestCase):
         self.assertEqual(punch["motion"], "slash")
         self.assertEqual(clean["caption"]["maxLines"], 2)
         self.assertEqual(punch["caption"]["maxLines"], 2)
+        self.assertEqual(clean["caption"]["charsPerLine"], 18)
+        self.assertEqual(punch["caption"]["charsPerLine"], 18)
         for preset in (clean, punch):
             music = preset["music"]
             self.assertLess(music["speechVolume"], music["gapVolume"])
             self.assertLess(music["ctaVolume"], music["speechVolume"])
             self.assertLessEqual(preset["maxColors"], 3)
+
+    def test_douyin_frame_spec_is_on_the_talking_head_presets(self):
+        guide = json.loads((ROOT / "motion-pack" / "guide.json").read_text(encoding="utf-8"))
+        self.assertEqual(set(guide["roles"]), {"script", "presenter", "subtitles", "music"})
+        names = ("opus-clean", "opus-punch", "card-knowledge", "eva-morph-v")
+        for name in names:
+            preset = load_preset(name)
+            margins = preset["platformMargins"]
+            self.assertGreaterEqual(margins["douyinBottom"], 0.18)
+            self.assertLessEqual(margins["douyinBottom"], 0.20)
+            self.assertEqual(margins["douyinRight"], 0.14)
+            self.assertGreaterEqual(margins["maskMinBottomPx"], 180)
+            self.assertGreaterEqual(margins["pipPx"], 360)
+            self.assertLessEqual(margins["pipPx"], 400)
+            box = preset["caption"]
+            self.assertGreaterEqual(box["bodySize"], 54)
+            self.assertLessEqual(box["bodySize"], 64)
+            self.assertGreaterEqual(box["hookSize"], 76)
+            self.assertLessEqual(box["hookSize"], 84)
+            self.assertGreaterEqual(box["numberSize"], 92)
+            self.assertLessEqual(box["numberSize"], 104)
+            self.assertEqual(box["charsPerLine"], 18)
+            self.assertEqual(box["maxLines"], 2)
+            self.assertGreaterEqual(box["bandCenter"], 0.65)
+            self.assertLessEqual(box["bandCenter"], 0.70)
+            self.assertIn("rgba(10,14,16,0.", preset["colors"]["pill"])
+            music = preset["music"]
+            self.assertGreaterEqual(music["speechVolume"], 0.12)
+            self.assertLessEqual(music["speechVolume"], 0.14)
+            self.assertGreaterEqual(music["gapVolume"], 0.40)
+            self.assertLessEqual(music["gapVolume"], 0.48)
+        self.assertEqual(load_preset("card-knowledge")["colors"]["accent"], "#8FCBB8")
+        self.assertEqual(load_preset("opus-punch")["colors"]["accent"], "#FFB703")
+        self.assertEqual(load_preset("eva-morph-v")["motion"], "morph")
+        self.assertEqual(load_preset("eva-morph-v")["colors"]["accent"], "#d4ff2e")
 
 
 class RenderPresetTest(unittest.TestCase):

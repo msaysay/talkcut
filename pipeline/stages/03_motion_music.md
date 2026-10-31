@@ -12,6 +12,8 @@
 
 | id | 用途 |
 |---|---|
+| `card-knowledge` | 深色知识卡。抖音安全区、一行字幕、最多两行 |
+| `eva-morph-v` | 全屏人脸收到右下圆角窗 |
 | `opus-clean` | 紧凑知识口播。字幕最多两行且完整，字体角色分开 |
 | `opus-punch` | 数字砍入后锁成完整数字。配乐仍然只在传入时压低 |
 | `clean-knowledge` | 早一版干净知识口播。字幕淡入 |
@@ -59,7 +61,17 @@ python3 pipeline/cli/talkcut.py motion \
   --bpm 96
 ```
 
-省略 `--music` 时没有配乐，也不生成节拍底乐。自带音乐时可以省略 `--bpm`，按音量起伏检测节拍。另一条可商用曲子用 `python3 examples/fetch_music.py` 下载后再传给 `--music`。
+省略 `--music` 时没有配乐，也不生成节拍底乐。自带音乐时可以省略 `--bpm`，按音量起伏检测节拍。人声段音量约 0.12–0.14，间隙约 0.40–0.48。另一条可商用曲子用 `python3 examples/fetch_music.py` 下载后再传给 `--music`。
+
+本机对粗剪出片：
+
+```bash
+python3 pipeline/cli/talkcut.py plan --project <工程> --orientation vertical --video rough.mp4
+python3 pipeline/cli/talkcut.py motion --project <工程> --preset card-knowledge --stills
+python3 pipeline/cli/talkcut.py motion --project <工程> --preset card-knowledge
+```
+
+没有本机 `rough.mp4` 时，把 `--video` 换成 `examples/fetch_stock.py` 下载的 Pexels 口播。云端样片用的是这条公开素材。
 
 `--lock` 把预设 id 写进 `motion-pack/presets/approved.json`。满意之后下一条继续用这个名字，不要每条重做一套动画。
 

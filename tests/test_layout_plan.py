@@ -75,6 +75,26 @@ class LayoutPlanTest(unittest.TestCase):
         self.assertEqual(len(plan["items"]), 1)
         self.assertIn("所以", plan["items"][0]["text"])
 
+    def test_long_face_run_becomes_a_morph(self):
+        rules = load_rules()
+        rules["rhythm"]["alternateFaceAndGraphic"] = False
+        rules["rhythm"]["maxSameLayoutSeconds"] = 100
+        rules["rhythm"]["maxSameLayoutSentences"] = 20
+        rules["rhythm"]["maxFaceSeconds"] = 11
+        sentences = [_line("我认为这是判断", i * 3, i * 3 + 3, role="opinion", sid=f"o{i}") for i in range(5)]
+        plan = build_plan(sentences, "vertical", rules, beats=[])
+        layouts = [item["layout"] for item in plan["items"]]
+        self.assertEqual(layouts[0], "v1")
+        self.assertIn("v3", layouts)
+        self.assertTrue(any("全屏人脸" in item["reason"] for item in plan["items"]))
+
+    def test_display_text_stays_separate_from_the_spoken_line(self):
+        plan = build_plan([
+            {"id": "s1", "text": "你知道为什么三秒就划走吗", "displayText": "三秒就划走", "start": 0.2, "end": 1.8},
+        ], "vertical", beats=[])
+        self.assertEqual(plan["items"][0]["text"], "你知道为什么三秒就划走吗")
+        self.assertEqual(plan["items"][0]["displayText"], "三秒就划走")
+
     def test_cut_snaps_toward_a_beat(self):
         rules = load_rules()
         rules["rhythm"]["alternateFaceAndGraphic"] = False

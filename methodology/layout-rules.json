@@ -120,6 +120,7 @@
     "minLayoutSeconds": 1.5,
     "maxGold": 1,
     "alternateFaceAndGraphic": true,
-    "beatSnapSeconds": 0.22
+    "beatSnapSeconds": 0.22,
+    "maxFaceSeconds": 11
   }
 }

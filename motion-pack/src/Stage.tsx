@@ -4,19 +4,28 @@ import type {FaceBox, LayoutSegment, Theme} from "./types";
 
 type Margins = {douyinBottom: number; douyinRight: number; maskMinBottomPx: number; pipPx: number};
 
-const DEFAULT_MARGINS: Margins = {douyinBottom: 0.14, douyinRight: 0.12, maskMinBottomPx: 140, pipPx: 380};
+const DEFAULT_MARGINS: Margins = {douyinBottom: 0.19, douyinRight: 0.14, maskMinBottomPx: 184, pipPx: 380};
+const PUNCH = [1, 1.18, 1.32];
+
+const punchScale = (progress: number) => PUNCH[Math.min(PUNCH.length - 1, Math.floor(Math.min(0.999, Math.max(0, progress)) * PUNCH.length))];
+
+const presenterPosition = (face: FaceBox | null) => {
+  if (!face) return "42% 31%";
+  const eyeY = (face.y + face.h * 0.32) * 100;
+  return `42% ${Math.min(35, Math.max(28, eyeY))}%`;
+};
 
 export const marginsOf = (theme: Theme): Margins => ({...DEFAULT_MARGINS, ...theme.platformMargins});
 
-const VideoFill: React.FC<{file: string; radius?: number}> = ({file, radius = 0}) => (
+const VideoFill: React.FC<{file: string; radius?: number; objectPosition?: string}> = ({file, radius = 0, objectPosition = "42% 31%"}) => (
   <OffthreadVideo
     src={staticFile(file)}
-    style={{width: "100%", height: "100%", objectFit: "cover", borderRadius: radius}}
+    style={{width: "100%", height: "100%", objectFit: "cover", objectPosition, borderRadius: radius}}
   />
 );
 
 const Card: React.FC<{title: string; body: string; theme: Theme; note?: string}> = ({title, body, theme, note}) => {
-  const tight = theme.motion === "settle" || theme.motion === "slash";
+  const tight = theme.motion === "settle" || theme.motion === "slash" || theme.motion === "morph";
   return (
   <div style={{color: theme.colors.ink, padding: tight ? "8% 8%" : "6% 7%"}}>
     <div style={{fontFamily: "TC Cover, TC Hook, TC Body, TC Fallback, sans-serif", fontSize: tight ? "0.78em" : "0.9em", letterSpacing: tight ? 6 : 2, color: theme.colors.accent}}>
@@ -54,8 +63,9 @@ export const Stage: React.FC<{
   const progress = segment ? Math.min(1, Math.max(0, (time - segment.start) / Math.max(0.01, segment.end - segment.start))) : 1;
   const face = segment?.face ?? null;
   const graphic = (
-    <Card title={segment?.title ?? ""} body={segment?.body ?? ""} theme={theme} note={layout === "v2" ? "先看这点" : undefined} />
+    <Card title={segment?.title ?? ""} body={segment?.body ?? ""} theme={theme} />
   );
+  const morphing = layout === "v3" || (theme.motion === "morph" && (layout === "v1" || layout === "full"));
 
   if (layout === "v2") {
     const size = Math.min(width, height) * 0.28;
@@ -78,7 +88,7 @@ export const Stage: React.FC<{
     );
   }
 
-  if (layout === "v3") {
+  if (morphing) {
     const amount = interpolate(progress, [0, 0.55], [0, 1], {extrapolateLeft: "clamp", extrapolateRight: "clamp"});
     const boxW = width * 0.42;
     const boxH = height * 0.28;
@@ -185,8 +195,8 @@ export const Stage: React.FC<{
   }
 
   if (layout === "h5") {
-    const scale = interpolate(progress, [0, 1], [1, 1.12], {extrapolateRight: "clamp"});
-    const origin = faceOrigin(face);
+    const scale = punchScale(progress);
+    const origin = face ? faceOrigin(face) : "42% 31%";
     return (
       <div style={{position: "absolute", inset: 0, transform: `scale(${scale})`, transformOrigin: origin}}>
         <VideoFill file={videoFile} />
@@ -196,8 +206,8 @@ export const Stage: React.FC<{
 
   const titleTop = face ? Math.max(0.03, face.y - 0.11) * height : height * 0.04;
   return (
-    <div style={{position: "absolute", inset: 0}}>
-      <VideoFill file={videoFile} />
+    <div style={{position: "absolute", inset: 0, transformOrigin: "42% 31%"}}>
+      <VideoFill file={videoFile} objectPosition={presenterPosition(face)} />
       {layout === "v1" && segment?.title ? (
         <div
           style={{

@@ -22,7 +22,10 @@
     "numberSize": 92,
     "goldSize": 64,
     "ctaSize": 70,
-    "listSize": 54
+    "listSize": 54,
+    "maxLines": 2,
+    "charsPerLine": 18,
+    "bandCenter": 0.68
   },
   "music": {
     "speechVolume": 0.12,
@@ -35,9 +38,9 @@
     "landscape": {"width": 1920, "height": 1080}
   },
   "platformMargins": {
-    "douyinBottom": 0.14,
-    "douyinRight": 0.12,
-    "maskMinBottomPx": 140,
+    "douyinBottom": 0.19,
+    "douyinRight": 0.14,
+    "maskMinBottomPx": 184,
     "pipPx": 380
   },
   "fontRoles": {

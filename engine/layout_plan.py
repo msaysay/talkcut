@@ -42,6 +42,7 @@ def load_script(path: Path) -> list[dict]:
                 "start": round(start, 3),
                 "end": round(end, 3),
                 "role": row.get("role"),
+                "displayText": str(row.get("displayText") or text).strip(),
             }
         )
     return sentences
@@ -98,6 +99,7 @@ def apply_rhythm(items: list[dict], rules: dict, orientation: str, beats: list[f
     max_seconds = float(rhythm["maxSameLayoutSeconds"])
     max_gold = int(rhythm["maxGold"])
     snap_tol = float(rhythm.get("beatSnapSeconds", 0.22))
+    max_face = float(rhythm.get("maxFaceSeconds", 11))
     golds = [item for item in items if item["role"] == "gold"]
     if len(golds) > max_gold:
         keep = max(golds, key=lambda item: item["end"] - item["start"])
@@ -111,19 +113,26 @@ def apply_rhythm(items: list[dict], rules: dict, orientation: str, beats: list[f
         duration = item["end"] - item["start"]
         if merged and duration < minimum:
             merged[-1]["end"] = item["end"]
+            shown = merged[-1].get("displayText") or merged[-1]["text"]
+            extra = item.get("displayText") or item["text"]
             merged[-1]["text"] += item["text"]
+            merged[-1]["displayText"] = shown + extra
             merged[-1]["reasons"].append(f"不足 {minimum:.1f} 秒，并入上一句")
             continue
         merged.append(item)
     if len(merged) > 1 and merged[0]["end"] - merged[0]["start"] < minimum:
+        head = merged[0].get("displayText") or merged[0]["text"]
+        tail = merged[1].get("displayText") or merged[1]["text"]
         merged[1]["start"] = merged[0]["start"]
         merged[1]["text"] = merged[0]["text"] + merged[1]["text"]
+        merged[1]["displayText"] = head + tail
         merged[1]["reasons"].append("首句太短，并入下一句")
         merged = merged[1:]
     run_layout = None
     run_count = 0
     run_start = 0.0
     previous_family = None
+    face_started: float | None = None
     for item in merged:
         spec = rules["layouts"][item["role"]]
         preferred, alternate = _layout_pair(item["role"], orientation, rules)
@@ -147,6 +156,22 @@ def apply_rhythm(items: list[dict], rules: dict, orientation: str, beats: list[f
         item["emphasis"] = spec["emphasis"]
         item["font"] = spec["font"]
         item["effects"] = list(spec.get("effects") or [])
+        if item["family"] == "face":
+            if face_started is None:
+                face_started = float(item["start"])
+            elif float(item["end"]) - face_started > max_face:
+                forced = "v3" if orientation == "vertical" else "h2"
+                item["reasons"].append(f"全屏人脸已超过 {max_face:.0f} 秒，改为 {forced}")
+                item["layout"] = forced
+                item["family"] = _family(forced, rules)
+                if "mask-morph" not in item["effects"] and orientation == "vertical":
+                    item["effects"].append("mask-morph")
+                face_started = None
+                run_layout = forced
+                run_count = 1
+                run_start = float(item["start"])
+        else:
+            face_started = None
         previous_family = item["family"]
     _snap_beats(merged, beats, minimum, snap_tol)
     return merged
@@ -199,6 +224,7 @@ def build_plan(
             {
                 "id": sentence["id"],
                 "text": sentence["text"],
+                "displayText": sentence.get("displayText") or sentence["text"],
                 "start": sentence["start"],
                 "end": sentence["end"],
                 "role": role,
