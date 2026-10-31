@@ -30,6 +30,7 @@ out/
 
 # TalkCut project workspaces and media (keep the tree, not user footage)
 *.mp4
+*.webm
 *.mov
 *.mkv
 *.wav

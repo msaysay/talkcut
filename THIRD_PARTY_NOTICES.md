@@ -68,3 +68,40 @@ TalkCut does not bundle these. `setup` records ffmpeg if it is already on PATH. 
 | SenseVoice | https://github.com/FunAudioLLM/SenseVoice | Not downloaded by TalkCut. Optional upstream of sayframe's aligner; see that model card if you use it yourself |
 
 PyAV, ONNX Runtime, and a SenseVoice ONNX build are sayframe setup dependencies. This port's default path uses ffmpeg plus the Python standard library, and does not fetch those packages.
+
+## Remotion
+
+`motion-pack/` depends on [Remotion](https://www.remotion.dev/) 4.0.539 (`remotion` and `@remotion/cli`). Remotion is source-available, not MIT.
+
+- Individuals, non-profits, and for-profit organizations with up to 3 employees may use it to create videos free of charge, including commercial videos.
+- Larger for-profit companies need a company license: https://www.remotion.pro/license
+- Terms: https://www.remotion.dev/docs/license
+
+TalkCut does not relicense Remotion. Rendering calls the Remotion CLI; it does not vendor Remotion's source.
+
+## Fonts (OFL-1.1)
+
+`setup --fonts` downloads these into `runtime/fonts`. The files are not committed. License texts are in `motion-pack/fonts/licenses/`. CSS uses role names (`TC Body`, `TC Hook`, …). The font files themselves are unmodified, so reserved font names stay inside the files.
+
+| Role | Family | Source |
+| --- | --- | --- |
+| 正文字幕 | Douyin Sans（抖音美好体） | https://github.com/bytedance/fonts |
+| 生僻字回退 | Noto Sans SC | https://github.com/notofonts/noto-cjk |
+| 强调 / 钩子 | Smiley Sans（得意黑） | https://github.com/atelier-anchor/smiley-sans |
+| 封面 / 大字钩子 | ZCOOL QingKe HuangYou（站酷庆科黄油体） | https://github.com/googlefonts/zcool-qingke-huangyou |
+| 金句 | Noto Serif SC Black（思源宋体） | https://github.com/notofonts/noto-cjk |
+| 数字 | Bebas Neue | https://github.com/google/fonts OFL `bebasneue` |
+| 数字备选 | Oswald | https://github.com/google/fonts OFL `oswald` |
+| 手写批注 | LXGW Marker Gothic（霞鹜漫黑） | https://github.com/lxgw/LxgwMarkerGothic |
+
+Not used: 阿里巴巴普惠体, MiSans, 钉钉进步体, 优设标题黑, 庞门正道, HarmonyOS Sans, DIN.
+
+If those downloads are missing, render falls back to a local CJK font such as Droid Sans Fallback (Apache-2.0) when it is installed.
+
+## Vision models (Apache-2.0)
+
+`setup --vision` downloads MediaPipe BlazeFace short-range and the selfie segmenter. They are not Robust Video Matting. Layout code in this repo is original. Public projects were used only as layout references (circle PiP, corner mask, split frame, lower third, landscape strip, number motion). Their source was not copied.
+
+## Sample footage
+
+`examples/fetch_stock.py` downloads Pexels video 8048443 (a person talking to camera). Pexels License allows commercial use. The mp4 is not committed. https://www.pexels.com/video/woman-talking-in-front-of-the-camera-8048443/

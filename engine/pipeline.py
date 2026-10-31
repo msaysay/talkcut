@@ -255,6 +255,9 @@ def _group_segments(words: list[dict]) -> list[dict]:
     groups: list[list[dict]] = []
     current: list[dict] = []
     for word in words:
+        if current and word["start"] - current[-1]["end"] >= 0.45:
+            groups.append(current)
+            current = []
         long_silence = word.get("kind") == "silence" and word["end"] - word["start"] >= 0.45
         if long_silence:
             if current:

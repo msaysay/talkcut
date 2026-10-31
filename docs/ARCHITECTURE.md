@@ -56,7 +56,7 @@ flowchart TD
 | `planning`、封面排版 | 改写为轻量实现 | `propose` 读方法论 JSON。封面命令只抽保留帧 |
 | sayframe 里的课程向文稿与对应模块 | 不迁入 | 规则在 `methodology/` |
 | 四段流水线与确认门 | 新建 | `apply` 必须 `confirmed: true`。动效单独成段 |
-| `motion-pack/` | 新建，本轮未接入导出 | Remotion。`motion` 只记钩子 |
+| `motion-pack/` | 新建，已接入 `motion` | Remotion 竖屏字幕与配乐。默认 `export` 仍是 FFmpeg |
 | `skills/talkcut/` | 新建 | 一份技能，Codex 与 WorkBuddy 都加载 |
 
 移植文件保留 sayframe 的 MIT 版权声明。

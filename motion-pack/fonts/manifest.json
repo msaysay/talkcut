@@ -1,0 +1,23 @@
+{
+  "note": "Binaries are downloaded by setup --fonts into runtime/fonts. License texts in licenses/ are committed. Do not rename modified fonts with a Reserved Font Name.",
+  "roles": {
+    "body": {"file": "DouyinSansBold.ttf", "family": "Douyin Sans", "license": "OFL-1.1", "url": "https://github.com/bytedance/fonts"},
+    "fallback": {"file": "NotoSansSC-Regular.ttf", "family": "Noto Sans SC", "license": "OFL-1.1", "url": "https://github.com/notofonts/noto-cjk"},
+    "hook": {"file": "SmileySans-Oblique.ttf", "family": "Smiley Sans", "license": "OFL-1.1", "url": "https://github.com/atelier-anchor/smiley-sans"},
+    "cover": {"file": "ZCOOLQingKeHuangYou-Regular.ttf", "family": "ZCOOL QingKe HuangYou", "license": "OFL-1.1", "url": "https://github.com/googlefonts/zcool-qingke-huangyou"},
+    "gold": {"file": "NotoSerifSC-Black.ttf", "family": "Noto Serif SC", "license": "OFL-1.1", "url": "https://github.com/notofonts/noto-cjk"},
+    "number": {"file": "BebasNeue-Regular.ttf", "family": "Bebas Neue", "license": "OFL-1.1", "url": "https://github.com/google/fonts"},
+    "numberAlternate": {"file": "Oswald-Medium.ttf", "family": "Oswald", "license": "OFL-1.1", "url": "https://github.com/google/fonts"},
+    "note": {"file": "LXGWMarkerGothic-Regular.ttf", "family": "LXGW Marker Gothic", "license": "OFL-1.1", "url": "https://github.com/lxgw/LxgwMarkerGothic"}
+  },
+  "downloads": [
+    {"file": "DouyinSansBold.ttf", "url": "https://raw.githubusercontent.com/bytedance/fonts/main/DouyinSans/DouyinSansBold.ttf"},
+    {"file": "ZCOOLQingKeHuangYou-Regular.ttf", "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/zcoolqingkehuangyou/ZCOOLQingKeHuangYou-Regular.ttf"},
+    {"file": "BebasNeue-Regular.ttf", "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/bebasneue/BebasNeue-Regular.ttf"},
+    {"file": "Oswald-Medium.ttf", "url": "https://github.com/google/fonts/raw/main/ofl/oswald/Oswald%5Bwght%5D.ttf"},
+    {"file": "LXGWMarkerGothic-Regular.ttf", "url": "https://github.com/google/fonts/raw/main/ofl/lxgwmarkergothic/LXGWMarkerGothic-Regular.ttf"},
+    {"file": "NotoSansSC-Regular.ttf", "url": "https://cdn.jsdelivr.net/fontsource/fonts/noto-sans-sc@5.2.8/chinese-simplified-400-normal.ttf"},
+    {"file": "NotoSerifSC-Black.ttf", "url": "https://cdn.jsdelivr.net/fontsource/fonts/noto-serif-sc@5.2.8/chinese-simplified-900-normal.ttf"},
+    {"file": "smiley.zip", "url": "https://github.com/atelier-anchor/smiley-sans/releases/download/v2.0.1/smiley-sans-v2.0.1.zip", "unzip": "SmileySans-Oblique.ttf"}
+  ]
+}
