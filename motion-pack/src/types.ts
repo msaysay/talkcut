@@ -8,6 +8,19 @@ export type Caption = {
   keywords: string[];
 };
 
+export type FaceBox = {x: number; y: number; w: number; h: number};
+
+export type LayoutSegment = {
+  layout: string;
+  start: number;
+  end: number;
+  title: string;
+  body: string;
+  caption: string;
+  captionAnchor: "top" | "middle" | "bottom";
+  face: FaceBox | null;
+};
+
 export type Theme = {
   id: string;
   compositionId: string;
@@ -40,17 +53,27 @@ export type Theme = {
     ctaVolume: number;
   };
   maxColors: number;
+  frames?: {vertical: {width: number; height: number}; landscape: {width: number; height: number}};
+  platformMargins?: {douyinBottom: number; douyinRight: number; maskMinBottomPx: number; pipPx: number};
+  fontRoles?: Record<string, string>;
 };
 
 export type MotionProps = {
   durationInFrames: number;
   fps: number;
+  width?: number;
+  height?: number;
+  orientation?: "vertical" | "landscape";
   videoFile: string;
   musicFile: string | null;
   fontFile: string;
+  fontFiles?: Record<string, string>;
   captions: Caption[];
   beats: number[];
   nameplate: {text: string; start: number; end: number} | null;
   theme: Theme;
   title: string;
+  segments?: LayoutSegment[];
+  personFile?: string | null;
+  personFrom?: number;
 };

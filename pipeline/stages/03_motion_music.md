@@ -19,6 +19,30 @@
 
 中文字体在渲染时从本机拷进工程（优先 Droid Sans Fallback，或 `TALKCUT_FONT`）。仓库不内置字体文件。
 
+## 画幅和版式
+
+`--orientation vertical` 是 1080×1920，`landscape` 是 1920×1080。坐标按画幅比例算。
+
+竖屏：`v1` 全屏加人脸上方标题，`v2` 圆形画中画，`v3` 收到右下圆角（底部至少 140px），`v4` 上图下文，`v5` 字在人身后（MediaPipe 自拍分割，不是 RVM），`v6` 横幅条带。
+
+横屏：`h1` 人占三分之一，`h2` 左人右板，`h3` 约 380px 画中画，`h4` 下三分之一字幕条，`h5` 缓慢推近。
+
+人脸每 0.5 秒检测一次，框外扩 18% 写入 `safe-zones.json`，字幕避开这块。抖音底部和右侧边距在 `preset.json` 的 `platformMargins`，以后用真机截图改数字。
+
+合集：
+
+```bash
+python3 examples/fetch_stock.py
+python3 pipeline/cli/talkcut.py motion \
+  --project examples/out/reel-vertical \
+  --preset clean-knowledge \
+  --orientation vertical \
+  --reel \
+  --video examples/out/pexels-talking-head.mp4
+```
+
+横屏把 `orientation` 改成 `landscape`，预设可以换成 `gold-line`。
+
 ## 命令
 
 ```bash

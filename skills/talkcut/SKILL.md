@@ -60,10 +60,17 @@ python3 <仓库根>/pipeline/cli/talkcut.py export --project "<工程目录>"
    粗剪之后再上字幕和配乐。预设只有两套，写在 `motion-pack/presets/`：`clean-knowledge`（干净知识口播）、`gold-line`（强节奏金句）。
 
    ```text
-   python3 <仓库根>/pipeline/cli/talkcut.py motion --project "<工程目录>" --preset clean-knowledge --music "<用户的BGM>"
+   python3 <仓库根>/pipeline/cli/talkcut.py motion --project "<工程目录>" --preset clean-knowledge --orientation vertical --music "<用户的BGM>"
    ```
 
-   用户没给音乐就不要编造曲目，省略 `--music`，程序会放一段生成的节拍底乐。人声段配乐会自动变小。用户认可后加 `--lock`，下一条继续用同一个预设名。不要为这一条新写一套动画。
+   `--orientation landscape` 是 1920×1080。两套预设都要能用这两种画幅。用户没给音乐就不要编造曲目，省略 `--music`。人声段配乐会自动变小。用户认可后加 `--lock`。
+
+   版式合集（不要把视频提交进仓库）：
+
+   ```text
+   python3 <仓库根>/examples/fetch_stock.py
+   python3 <仓库根>/pipeline/cli/talkcut.py motion --project "<工程目录>" --preset clean-knowledge --orientation vertical --reel --video "<下载的 mp4>"
+   ```
 
 7. **cover**  
    需要封面时再做。公式是关键词 + 数字 + 人。人物约占画面三分之二。关掉画面标题不等于默许封面标题。

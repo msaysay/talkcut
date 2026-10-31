@@ -88,35 +88,68 @@ class RenderPresetTest(unittest.TestCase):
             project = _prepare(Path(temporary), ffmpeg)
             movies = []
             for name in ("clean-knowledge", "gold-line"):
-                rendered = render_motion(project, name, bpm=120)
-                movie = Path(rendered["movie"])
-                self.assertTrue(movie.is_file(), name)
-                info = probe(ffprobe, movie)
-                self.assertTrue(info["hasVideo"])
-                self.assertTrue(info["hasAudio"])
-                self.assertEqual(info["width"], 1080)
-                self.assertEqual(info["height"], 1920)
-                self.assertGreater(info["duration"], 0.8)
-                self.assertTrue(Path(rendered["cover"]).is_file())
-                movies.append((name, movie, Path(rendered["cover"])))
+                for orientation, width, height in (("vertical", 1080, 1920), ("landscape", 1920, 1080)):
+                    rendered = render_motion(project, name, bpm=120, orientation=orientation)
+                    movie = Path(rendered["movie"])
+                    info = probe(ffprobe, movie)
+                    self.assertTrue(info["hasVideo"] and info["hasAudio"])
+                    self.assertEqual(info["width"], width, f"{name} {orientation}")
+                    self.assertEqual(info["height"], height, f"{name} {orientation}")
+                    self.assertGreater(info["duration"], 0.8)
+                    if orientation == "vertical":
+                        self.assertTrue(Path(rendered["cover"]).is_file())
+                        movies.append((name, movie, Path(rendered["cover"])))
             self.assertEqual(len(movies), 2)
             artifact_dir = Path("/opt/cursor/artifacts")
             artifact_dir.mkdir(parents=True, exist_ok=True)
             for name, movie, cover in movies:
-                target = artifact_dir / f"motion-{name}.mp4"
+                target = artifact_dir / f"preset-{name}-vertical.mp4"
                 target.write_bytes(movie.read_bytes())
-                frame = artifact_dir / f"motion-{name}.png"
+                frame = artifact_dir / f"preset-{name}-vertical.png"
                 subprocess.run(
                     [ffmpeg, "-y", "-v", "error", "-ss", "0.2", "-i", str(movie), "-frames:v", "1", str(frame)],
                     check=True,
                 )
                 if name == "gold-line":
                     subprocess.run(
-                        [ffmpeg, "-y", "-v", "error", "-ss", "1.05", "-i", str(movie), "-frames:v", "1", str(artifact_dir / "motion-gold-line-late.png")],
+                        [ffmpeg, "-y", "-v", "error", "-ss", "1.05", "-i", str(movie), "-frames:v", "1", str(artifact_dir / "preset-gold-line-late.png")],
                         check=True,
                     )
-                shutil_cover = artifact_dir / f"cover-{name}.png"
+                shutil_cover = artifact_dir / f"preset-cover-{name}.png"
                 shutil_cover.write_bytes(cover.read_bytes())
+
+
+    def test_stock_layout_reels(self):
+        if not (ROOT / "motion-pack" / "node_modules" / "remotion").is_dir():
+            self.skipTest("remotion is not installed")
+        from engine.reel import render_layout_reel
+        import urllib.request
+
+        ffmpeg, ffprobe = require_ffmpeg()
+        video = Path("/tmp/talkcut-assets/pexels-8048443.mp4")
+        if not video.is_file():
+            video.parent.mkdir(parents=True, exist_ok=True)
+            urllib.request.urlretrieve(
+                "https://videos.pexels.com/video-files/8048443/8048443-hd_1080_1920_25fps.mp4",
+                video,
+            )
+        vertical = render_layout_reel(Path("/tmp/talkcut-reel-v"), video, "vertical", "clean-knowledge")
+        landscape = render_layout_reel(Path("/tmp/talkcut-reel-h"), video, "landscape", "gold-line")
+        artifact_dir = Path("/opt/cursor/artifacts")
+        artifact_dir.mkdir(parents=True, exist_ok=True)
+        for label, rendered, stamps in (
+            ("vertical", vertical, [("v1", 0.4), ("v2", 2.4), ("v3", 3.8), ("v4", 4.6), ("v5", 6.0), ("v6", 7.3)]),
+            ("landscape", landscape, [("h1", 0.4), ("h2", 1.8), ("h3", 3.2), ("h4", 4.6), ("h5", 6.2)]),
+        ):
+            movie = Path(rendered["movie"])
+            info = probe(ffprobe, movie)
+            self.assertEqual((info["width"], info["height"]), (1080, 1920) if label == "vertical" else (1920, 1080))
+            (artifact_dir / f"reel-{label}.mp4").write_bytes(movie.read_bytes())
+            for name, second in stamps:
+                subprocess.run(
+                    [ffmpeg, "-y", "-v", "error", "-ss", str(second), "-i", str(movie), "-frames:v", "1", str(artifact_dir / f"layout-{name}.png")],
+                    check=True,
+                )
 
 
 if __name__ == "__main__":

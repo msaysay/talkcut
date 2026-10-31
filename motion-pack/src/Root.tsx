@@ -21,6 +21,9 @@ const fallback: MotionProps = {
 
 const duration = ({props}: {props: MotionProps}) => ({
   durationInFrames: Math.max(1, Math.round(props.durationInFrames)),
+  width: props.width || props.theme.width || 1080,
+  height: props.height || props.theme.height || 1920,
+  fps: props.fps || 30,
 });
 
 export const RemotionRoot: React.FC = () => {
@@ -54,6 +57,11 @@ export const RemotionRoot: React.FC = () => {
         width={1080}
         height={1920}
         defaultProps={fallback}
+        calculateMetadata={({props}) => ({
+          durationInFrames: 1,
+          width: props.width || props.theme.width || 1080,
+          height: props.height || props.theme.height || 1920,
+        })}
       />
     </>
   );

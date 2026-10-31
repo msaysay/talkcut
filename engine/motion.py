@@ -150,6 +150,50 @@ def _music_track(folder: Path, duration: float, music: Path | None, bpm: float |
     return target, beats, float(detected)
 
 
+def apply_orientation(preset: dict, orientation: str) -> dict:
+    if orientation not in {"vertical", "landscape"}:
+        raise TalkCutError("--orientation 只能是 vertical 或 landscape。")
+    themed = dict(preset)
+    frames = (preset.get("frames") or {}).get(orientation)
+    if frames:
+        themed["width"] = frames["width"]
+        themed["height"] = frames["height"]
+    elif orientation == "landscape":
+        themed["width"] = 1920
+        themed["height"] = 1080
+    return themed
+
+
+def detected_models() -> dict[str, Path]:
+    folder = REPO / "runtime" / "models"
+    face = folder / "blaze_face_short_range.tflite"
+    segmenter = folder / "selfie_segmenter.tflite"
+    if not face.is_file() or not segmenter.is_file():
+        raise TalkCutError("缺少 MediaPipe 模型。运行 python3 pipeline/cli/talkcut.py setup --vision")
+    return {"face": face, "segmenter": segmenter}
+
+
+def copy_role_fonts(public: Path, fonts: dict[str, Path]) -> dict[str, str]:
+    dest = public / "fonts"
+    dest.mkdir(parents=True, exist_ok=True)
+    written = {}
+    for role, path in fonts.items():
+        if path.is_file():
+            shutil.copyfile(path, dest / f"{role}.ttf")
+            written[role] = f"fonts/{role}.ttf"
+    fallback = dest / "fallback.ttf"
+    cjk = dest / "cjk.ttf"
+    if fallback.is_file():
+        shutil.copyfile(fallback, cjk)
+    elif not cjk.is_file():
+        system = _find_font()
+        shutil.copyfile(system, cjk)
+        if "fallback" not in written:
+            shutil.copyfile(system, fallback)
+            written["fallback"] = "fonts/fallback.ttf"
+    return written
+
+
 def build_props(project: dict, preset: dict, beats: list[float], duration: float) -> dict:
     captions = captions_from_edit(project, preset["id"])
     nameplate = None
@@ -161,14 +205,21 @@ def build_props(project: dict, preset: dict, beats: list[float], duration: float
     return {
         "durationInFrames": max(1, int(round(duration * fps))),
         "fps": fps,
+        "width": int(preset.get("width") or 1080),
+        "height": int(preset.get("height") or 1920),
+        "orientation": "landscape" if int(preset.get("width") or 1080) > int(preset.get("height") or 1920) else "vertical",
         "videoFile": "video.mp4",
         "musicFile": "music.wav",
         "fontFile": "fonts/cjk.ttf",
+        "fontFiles": {},
         "captions": captions,
         "beats": beats,
         "nameplate": nameplate,
         "theme": preset,
         "title": captions[0]["text"][:18],
+        "segments": [],
+        "personFile": None,
+        "personFrom": 0,
     }
 
 
@@ -179,9 +230,11 @@ def render_motion(
     music: Path | None = None,
     bpm: float | None = None,
     lock: bool = False,
+    orientation: str = "vertical",
+    layout: str | None = None,
 ) -> dict:
     folder = Path(folder).expanduser().resolve()
-    preset = load_preset(preset_name)
+    preset = apply_orientation(load_preset(preset_name), orientation)
     ffmpeg, _ffprobe = require_ffmpeg()
     project = load(folder)
     if not (project.get("edit") or {}).get("applied"):
@@ -200,14 +253,34 @@ def render_motion(
         shutil.rmtree(public)
     public.mkdir(parents=True)
     shutil.copyfile(movie, public / "video.mp4")
-    font = _find_font()
-    (public / "fonts").mkdir()
-    shutil.copyfile(font, public / "fonts" / "cjk.ttf")
+    try:
+        from engine.font_setup import ensure_fonts
+
+        role_fonts = ensure_fonts()
+    except TalkCutError:
+        role_fonts = {}
+    font_files = copy_role_fonts(public, role_fonts)
     _track, beats, detected_bpm = _music_track(folder, duration, music, bpm, ffmpeg)
     props = build_props(project, preset, beats, duration)
+    props["fontFiles"] = font_files
+    if font_files.get("fallback"):
+        props["fontFile"] = font_files["fallback"]
+    if layout:
+        props["segments"] = [
+            {
+                "layout": layout,
+                "start": 0,
+                "end": round(duration, 3),
+                "title": props["title"],
+                "body": "",
+                "caption": props["captions"][0]["text"] if props["captions"] else "",
+                "captionAnchor": "bottom",
+                "face": None,
+            }
+        ]
     props_path = folder / "motion" / "props.json"
     props_path.write_text(json.dumps(props, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    out = export_dir / f"motion-{preset['id']}.mp4"
+    out = export_dir / f"motion-{preset['id']}{'' if orientation == 'vertical' else '-landscape'}.mp4"
     _run_remotion("render", preset["compositionId"], out, props_path, public)
     still = None
     if preset.get("coverCompositionId"):
@@ -221,6 +294,9 @@ def render_motion(
         "movie": str(out),
         "cover": str(still) if still else None,
         "bpm": detected_bpm,
+        "orientation": orientation,
+        "width": preset.get("width"),
+        "height": preset.get("height"),
         "beats": len(beats),
         "music": "generated-bed" if music is None else str(Path(music).resolve()),
         "ducking": True,
@@ -255,6 +331,10 @@ def render_cover_still(folder: Path, preset_name: str, title: str | None = None)
     dest = folder / "export" / f"cover-{preset['id']}.png"
     _run_remotion("still", preset.get("coverCompositionId") or "cover-still", dest, props_path, public)
     return {"cover": str(dest), "preset": preset["id"], "title": props.get("title")}
+
+
+def render_with_props(composition: str, dest: Path, props_path: Path, public: Path) -> None:
+    _run_remotion("render", composition, dest, props_path, public)
 
 
 def _run_remotion(kind: str, composition: str, dest: Path, props_path: Path, public: Path) -> None:

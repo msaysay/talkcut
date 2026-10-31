@@ -117,10 +117,14 @@ python3 pipeline/cli/talkcut.py export \
 
 ```bash
 cd motion-pack && npm install && cd ..
+python3 pipeline/cli/talkcut.py setup --fonts --vision
 python3 pipeline/cli/talkcut.py motion \
   --project examples/out/breath-project \
-  --preset clean-knowledge
+  --preset clean-knowledge \
+  --orientation vertical
 ```
+
+横屏把 `--orientation` 改成 `landscape`。口播样片用 `python3 examples/fetch_stock.py` 下载，不要把 mp4 提交进仓库。
 
 需要公司使用 Remotion 时，先看 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。更大的营利组织需要 Remotion 公司许可证。
 

@@ -1,6 +1,6 @@
 # TalkCut 路线图
 
-粗剪能从 `import` 走到 FFmpeg `export`。`motion --preset` 再用 Remotion 叠竖屏字幕和鼓点配乐，预设是 `clean-knowledge` 与 `gold-line`。语义多方向和语音模型下载仍在后面。
+`motion` 支持竖屏和横屏，以及 v1–v6、h1–h5。字幕含逐字出现、数字滚动、钩子砍入和高亮。字在人身后用 MediaPipe 自拍分割。抖音边距仍是可配置比例，还没用真机截图校准。语义多方向和语音模型下载仍在后面。
 
 ## MVP
 

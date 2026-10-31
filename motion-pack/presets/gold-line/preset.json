@@ -29,5 +29,24 @@
     "gapVolume": 0.48,
     "ctaVolume": 0.08
   },
-  "maxColors": 3
+  "maxColors": 3,
+  "frames": {
+    "vertical": {"width": 1080, "height": 1920},
+    "landscape": {"width": 1920, "height": 1080}
+  },
+  "platformMargins": {
+    "douyinBottom": 0.14,
+    "douyinRight": 0.12,
+    "maskMinBottomPx": 140,
+    "pipPx": 380
+  },
+  "fontRoles": {
+    "body": "body",
+    "hook": "hook",
+    "cover": "cover",
+    "gold": "gold",
+    "number": "number",
+    "note": "note",
+    "fallback": "fallback"
+  }
 }
