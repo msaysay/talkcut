@@ -1,0 +1,57 @@
+{
+  "format": "talkcut-edit-v0",
+  "status": "documented fields only; no validator in this scaffold",
+  "upstream": {
+    "repo": "https://github.com/msaysay/sayframe",
+    "license": "MIT",
+    "reference": "references/edit-contract.json",
+    "upstreamFormat": "typed-source-edit-v1",
+    "note": "Same idea as sayframe typed source edits: order and display changes bind to real segment ids. TalkCut adds rough-cut reasons and a motion preset slot."
+  },
+  "stage": "Accepted only after the user confirms a direction. Rough cut writes this document. Motion and finish read the same project revision.",
+  "required": ["summary", "revision"],
+  "fields": {
+    "summary": "what this edit changes, in the user's language",
+    "revision": "revision string from the latest read; stale revisions are rejected",
+    "order": "optional. Kept segment ids in final order, no duplicates. Ids left out stay in the source and can be restored. This does not destroy media.",
+    "removeSpans": [
+      {
+        "id": "real segment id",
+        "reason": "breath | silence | filler | repeat | pre-hook | off-task",
+        "heuristicId": "one of methodology cut_heuristics ids"
+      }
+    ],
+    "keepHumanMoments": [
+      {
+        "id": "real segment id",
+        "reason": "laugh | breath | pause | reaction"
+      }
+    ],
+    "subtitles": [
+      {
+        "id": "real segment id",
+        "original": "ASR token or span",
+        "text": "display correction only; does not delete or replace audio"
+      }
+    ],
+    "settings": {
+      "captionsEnabled": "boolean, independent of the title overlay",
+      "titleEnabled": "boolean, independent of captions",
+      "title": "accurate short title, prefer 28 characters, hard max 120",
+      "credibilityNameplate": {
+        "text": "资格背书词 shown on the nameplate, or empty",
+        "maxTimes": 2,
+        "durationSeconds": [2, 4]
+      },
+      "voice": "number 0 to 4, default 1",
+      "musicVolume": "number 0 to 1, default low enough that speech stays clear",
+      "musicPreset": "motion-pack presets/bgm id, or null until stage 3 locks a template",
+      "motionTemplate": "approved motion-pack preset id, or null",
+      "speed": "number 0.5 to 2, default 1; do not speed up just to shorten the hook",
+      "coverTitlePattern": "one of cover_title_patterns ids"
+    }
+  },
+  "removeSpansNote": "Documented for the future rough cut. The scaffold does not delete audio. A later port should refuse cuts the speech engine cannot prove, and should prefer keeping human breaths over a machine-gun jump cut.",
+  "forbidden": "Model-supplied audio timestamps, shell commands, asset download URLs, credentials, and example ids used as if they belonged to the current media.",
+  "revisionRule": "apply must send the revision from the latest read. If it does not match, read again and do not overwrite."
+}

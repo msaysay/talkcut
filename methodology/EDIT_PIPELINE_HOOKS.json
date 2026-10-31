@@ -1,0 +1,488 @@
+{
+  "meta": {
+    "name": "talkinghead-editor-methodology-hooks",
+    "lang": "zh-Hans",
+    "version": "1.0",
+    "stages": [
+      "stage1_edit_direction",
+      "stage2_rough_cut"
+    ]
+  },
+  "video_types": [
+    {
+      "id": "pillar_daily",
+      "name": "日常单观点支柱",
+      "journey_roles": [
+        "need_education",
+        "trust_conversion",
+        "reach_breakout"
+      ]
+    },
+    {
+      "id": "number_list",
+      "name": "数字框架清单",
+      "journey_roles": [
+        "need_education",
+        "trust_conversion"
+      ]
+    },
+    {
+      "id": "emotion",
+      "name": "情绪框架",
+      "journey_roles": [
+        "need_education",
+        "reach_breakout"
+      ]
+    },
+    {
+      "id": "consumer_psych",
+      "name": "消费心理成交",
+      "journey_roles": [
+        "trust_conversion",
+        "why_now"
+      ]
+    },
+    {
+      "id": "four_forces",
+      "name": "四力均衡",
+      "journey_roles": [
+        "need_education",
+        "trust_conversion",
+        "why_now"
+      ]
+    },
+    {
+      "id": "business_story",
+      "name": "业务故事片",
+      "journey_roles": [
+        "need_education",
+        "trust_conversion"
+      ]
+    },
+    {
+      "id": "scene_tour",
+      "name": "场景体验片",
+      "journey_roles": [
+        "trust_conversion"
+      ]
+    },
+    {
+      "id": "product_explain",
+      "name": "产品说明片",
+      "journey_roles": [
+        "trust_conversion",
+        "why_now"
+      ]
+    },
+    {
+      "id": "direct_close",
+      "name": "直答成交片",
+      "journey_roles": [
+        "trust_conversion",
+        "why_now"
+      ]
+    },
+    {
+      "id": "faq",
+      "name": "FAQ疑虑片",
+      "journey_roles": [
+        "trust_conversion",
+        "why_now"
+      ]
+    },
+    {
+      "id": "news_notice",
+      "name": "通知型",
+      "journey_roles": [
+        "trust_conversion",
+        "why_now"
+      ]
+    }
+  ],
+  "structure": {
+    "opening": {
+      "goal": "为什么值得看",
+      "max_hook_seconds": 3,
+      "styles": [
+        "提问式",
+        "讲故事",
+        "笃定式",
+        "对比式",
+        "夸张式",
+        "纠正式",
+        "喊话式"
+      ],
+      "business_story_first_seconds": 20,
+      "business_story_must_include": [
+        "流量切口",
+        "资格背书词",
+        "可验证成绩",
+        "观看理由"
+      ]
+    },
+    "development": {
+      "goal": "为什么相信你",
+      "support_types": [
+        "权威数据",
+        "专家说法",
+        "历史趋势",
+        "名人案例",
+        "实验对比",
+        "经济账",
+        "客户案例",
+        "亲身经历"
+      ],
+      "support_count_range": [
+        1,
+        3
+      ]
+    },
+    "close": {
+      "goal": "为什么记住你或行动",
+      "elements": [
+        "资格背书词",
+        "产品点到为止",
+        "价值总结",
+        "升华",
+        "互动钩子",
+        "引流CTA"
+      ],
+      "cta_window_ratio": [
+        0.05,
+        0.15
+      ]
+    },
+    "pacing_ratios": {
+      "pillar_daily": {
+        "opening": [
+          0.1,
+          0.2
+        ],
+        "development": [
+          0.55,
+          0.7
+        ],
+        "close": [
+          0.15,
+          0.25
+        ]
+      },
+      "number_list": {
+        "opening": [
+          0.1,
+          0.15
+        ],
+        "development": [
+          0.7,
+          0.8
+        ],
+        "close": [
+          0.1,
+          0.15
+        ]
+      },
+      "consumer_psych": {
+        "opening": [
+          0.15,
+          0.25
+        ],
+        "development": [
+          0.45,
+          0.55
+        ],
+        "close": [
+          0.25,
+          0.35
+        ]
+      },
+      "four_forces": {
+        "breakout": 0.1,
+        "persona": 0.3,
+        "expertise": 0.3,
+        "conversion": 0.3
+      }
+    }
+  },
+  "cut_heuristics": [
+    {
+      "id": "hook_first_3s",
+      "priority": 1,
+      "rule": "成片0-3秒必须落在钩子完整意群；此前无效准备动作删除或后移"
+    },
+    {
+      "id": "drop_pre_hook_filler",
+      "priority": 2,
+      "rule": "删除清嗓、整理仪容、无意义寒暄、开拍指令"
+    },
+    {
+      "id": "prefer_best_emotion_take",
+      "priority": 3,
+      "rule": "多take时优先情绪与对象感最好的一遍，而非口误最少"
+    },
+    {
+      "id": "keep_human_moments",
+      "priority": 4,
+      "rule": "默认保留笑、气口、自然停顿；仅删技术失误与冗长沉默"
+    },
+    {
+      "id": "one_thesis_only",
+      "priority": 5,
+      "rule": "删除与主观点/主营销三问无关的支线"
+    },
+    {
+      "id": "dedupe_repeats",
+      "priority": 6,
+      "rule": "同义反复超过有效次数时保留最清晰或情绪最佳一次"
+    },
+    {
+      "id": "support_block_cuts",
+      "priority": 7,
+      "rule": "展段按支撑块分切；块边界可插证据B-roll"
+    },
+    {
+      "id": "micro_jumpcut_fillers",
+      "priority": 8,
+      "rule": "可微跳切填充词但保持呼吸自然，禁止机关枪节奏"
+    },
+    {
+      "id": "interview_self_contained",
+      "priority": 9,
+      "rule": "对谈可删提问，回答须自带语境仍自洽"
+    },
+    {
+      "id": "insert_evidence_on_proof_lines",
+      "priority": 10,
+      "rule": "在数据/做过/客户反馈类句子处插入证据画面"
+    },
+    {
+      "id": "protect_emotion_peaks",
+      "priority": 11,
+      "rule": "勿在情绪最高点硬切，在峰后落点切"
+    },
+    {
+      "id": "clean_cta_tail",
+      "priority": 12,
+      "rule": "CTA前后短静音或弱化BGM；删除CTA后无效闲聊"
+    },
+    {
+      "id": "story_chapter_cuts",
+      "priority": 13,
+      "rule": "业务故事片按起点-冲突-萌发-求索-立志-行动-成果-升华分章"
+    },
+    {
+      "id": "direct_close_keep_formula",
+      "priority": 14,
+      "rule": "直答成交片完整保留固定问句开场，勿打乱骨架"
+    }
+  ],
+  "caption_emphasis": [
+    {
+      "trigger": "hook_keywords",
+      "action": "大号字幕/高对比，短时显示"
+    },
+    {
+      "trigger": "counterintuitive_claim",
+      "action": "整句或关键词强调"
+    },
+    {
+      "trigger": "numbers",
+      "action": "数字放大，可短定格"
+    },
+    {
+      "trigger": "gold_line",
+      "action": "全句字幕+轻动效"
+    },
+    {
+      "trigger": "credibility_phrase",
+      "action": "名片条中左不挡脸，2-4秒，短视频通常不超过2次"
+    },
+    {
+      "trigger": "pain_visual_phrase",
+      "action": "画面感关键词高亮"
+    },
+    {
+      "trigger": "cta_keyword",
+      "action": "特大字幕且与口播关键字一致"
+    },
+    {
+      "trigger": "list_item",
+      "action": "序号徽章，一点一切换"
+    },
+    {
+      "trigger": "color_limit",
+      "action": "单条主色不超过3种"
+    }
+  ],
+  "cover_title_patterns": [
+    {
+      "id": "question",
+      "pattern": "你知道……吗？ / 为什么……还会……？"
+    },
+    {
+      "id": "number",
+      "pattern": "N个…… / ……花了多少……"
+    },
+    {
+      "id": "counterintuitive",
+      "pattern": "真正……的人，往往……"
+    },
+    {
+      "id": "correction",
+      "pattern": "别再以为……"
+    },
+    {
+      "id": "callout",
+      "pattern": "……的人注意了"
+    },
+    {
+      "id": "ranking_extreme",
+      "pattern": "最……的N个……"
+    },
+    {
+      "id": "contrast",
+      "pattern": "A和B，……差别有多大"
+    },
+    {
+      "id": "direct_close",
+      "pattern": "为什么……会找我……"
+    },
+    {
+      "id": "cover_formula",
+      "pattern": "关键词 + 数字 + 人（表情/立场）",
+      "person_ratio": 0.66
+    }
+  ],
+  "cta_patterns": [
+    {
+      "id": "comment_keyword",
+      "placement": "close",
+      "example": "评论区打「关键词」"
+    },
+    {
+      "id": "dm_keyword",
+      "placement": "close",
+      "example": "私信「关键词」"
+    },
+    {
+      "id": "booking",
+      "placement": "close",
+      "example": "预约直播/咨询"
+    },
+    {
+      "id": "pin_guide",
+      "placement": "close",
+      "example": "看置顶了解完整方法"
+    },
+    {
+      "id": "soft_then_hard",
+      "placement": "dev_end_then_close",
+      "example": "展末软钩+收段硬CTA"
+    },
+    {
+      "id": "interactive_question",
+      "placement": "close",
+      "example": "你愿不愿意……？你怎么看？",
+      "hold_seconds": [
+        0.5,
+        1.0
+      ]
+    },
+    {
+      "id": "mid_chapter_light",
+      "placement": "long_form_mid",
+      "example": "长视频章节末轻CTA，片尾主CTA"
+    }
+  ],
+  "frameworks": {
+    "pillar_framework": {
+      "name": "单观点支柱框架",
+      "rules": [
+        "一条只讲一件事",
+        "反认知观点",
+        "强支撑",
+        "人群垂直",
+        "带目的"
+      ]
+    },
+    "number_framework": {
+      "name": "数字框架",
+      "preferred_points": 3,
+      "memory_hint": "7-3-1"
+    },
+    "emotion_framework": {
+      "name": "情绪框架",
+      "rules": [
+        "先共鸣再讲深",
+        "BGM与节奏匹配情绪"
+      ]
+    },
+    "consumer_psych_framework": {
+      "name": "消费心理框架",
+      "flow": [
+        "痛点",
+        "答案",
+        "支撑",
+        "成交力",
+        "行动"
+      ],
+      "pain_formula": "具体问题 + 隐患后果 + 画面感"
+    },
+    "four_forces_framework": {
+      "name": "四力均衡框架",
+      "parts": {
+        "breakout": 0.1,
+        "persona": 0.3,
+        "expertise": 0.3,
+        "conversion": 0.3
+      }
+    }
+  },
+  "audiences": {
+    "paying_audience": "付费人群",
+    "bridge_audience": "流量桥梁人群",
+    "amplify_audience": "流量扩散人群"
+  },
+  "marketing_questions": [
+    "why_need",
+    "why_me",
+    "why_now"
+  ],
+  "visual_layout": {
+    "subject_frame_ratio": 0.66,
+    "caption_vertical_zone": "lower_third_not_bottom",
+    "title_safe_area": true,
+    "nameplate_max_times_short": 2,
+    "nameplate_duration_seconds": [
+      2,
+      4
+    ],
+    "bgm_duck_under_voice": true
+  },
+  "stage1_checklist": [
+    "video_type",
+    "journey_role",
+    "hook_candidate",
+    "opening_style",
+    "structure_blocks",
+    "support_blocks",
+    "gold_lines",
+    "numbers_to_punch",
+    "credibility_phrase",
+    "cta",
+    "cover_title_pattern",
+    "keep_human_moments",
+    "cut_candidates"
+  ],
+  "stage2_checklist": [
+    "best_emotion_take_applied",
+    "hook_in_first_3s",
+    "ods_boundaries_clear",
+    "heuristics_applied",
+    "captions_on_gold_number_cred_cta",
+    "nameplate_timing_ok",
+    "safe_areas_ok",
+    "bgm_not_masking_voice",
+    "cover_title_suggested",
+    "no_risk_emphasis"
+  ]
+}

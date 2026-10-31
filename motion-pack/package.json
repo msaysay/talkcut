@@ -1,0 +1,21 @@
+{
+  "name": "talkcut-motion-pack",
+  "version": "0.0.0",
+  "private": true,
+  "description": "TalkCut Remotion motion-pack stub. Drum-beat BGM and caption motion presets will live under presets/.",
+  "scripts": {
+    "studio": "remotion studio src/index.ts",
+    "compositions": "remotion compositions src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.539",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "remotion": "4.0.539"
+  },
+  "devDependencies": {
+    "@types/react": "19.0.10",
+    "typescript": "5.8.3"
+  }
+}
