@@ -25,6 +25,8 @@
 - 一份可撤销的粗剪工程（引擎移植之后）
 - 开 / 展 / 收 在成片上的边界
 
-## 尚未接入
+## 现在会执行的部分
 
-气口检测、静音、对齐和跳切要等 `engine/` 从 sayframe 移植 `speech_alignment`、`audio_cuts`、`speech_cleanup`。在那之前 CLI 的 `apply` 会拒绝执行。
+`apply` 读取 edit contract。`removeSpans` 丢掉整段。`removeWords` 按词切掉声音，导出用切完的时间。`cleanup.breath`、`cleanup.filler`、`cleanup.silence` 会自动加入这些词切。`keepHumanMoments` 里的片段跳过自动清理。
+
+气口来自音量分段，不依赖语音模型。单独的「嗯 / 呃 / um」即使响度很高也会按词删掉。正常语法衔接会被移植的 `disfluency_grammar` 挡住，不会只因为叠字就被删。
