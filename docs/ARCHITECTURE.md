@@ -1,6 +1,6 @@
 # TalkCut 架构
 
-TalkCut 是单人口播的四段流水线。宿主（Codex 或 WorkBuddy）只负责理解和确认；切点、对齐和编码以后走本机引擎；字幕动效和鼓点配乐走新建的 Remotion 包。
+TalkCut 是单人口播的四段流水线。宿主（Codex 或 WorkBuddy）负责理解和确认。切点、对齐和编码在 `engine/`。字幕动效和鼓点配乐仍是 Remotion 包，粗剪导出还不调用它。
 
 ## 总览
 
@@ -51,14 +51,15 @@ flowchart TD
 
 | 块 | 策略 | 说明 |
 |---|---|---|
-| `speech_alignment`、`audio_cuts`、`speech_cleanup` | 复用，稍后移植 | 气口、静音、对齐、清理。不在本仓库重写 |
-| `planning`、`editor_export`、`covers` | 复用，稍后移植 | 方案、导出、封面。字段见 `pipeline/contracts/` |
-| sayframe 里的课程向文稿与对应模块 | 改写为不迁入 | 改由 `methodology/` 的脱敏包提供规则和 JSON 钩子 |
-| 四段流水线与确认门 | 新建 | 在方向和粗剪之间强制停一次；动效单独成段，模板认可后锁定 |
-| `motion-pack/` | 新建 | Remotion。鼓点风 BGM 与字幕 MG，不放进 sayframe 引擎 |
+| `speech_alignment`、`audio_cuts`、`speech_cleanup`、`smart_pauses` | 已移植 | 气口和静音会在 `apply` 里切掉并进入导出 |
+| `editor_export`、`video_finish` | 已移植可用的部分 | 成片打包和倍速校验。标题排版仍依赖上游其余模块 |
+| `planning`、封面排版 | 改写为轻量实现 | `propose` 读方法论 JSON。封面命令只抽保留帧 |
+| sayframe 里的课程向文稿与对应模块 | 不迁入 | 规则在 `methodology/` |
+| 四段流水线与确认门 | 新建 | `apply` 必须 `confirmed: true`。动效单独成段 |
+| `motion-pack/` | 新建，本轮未接入导出 | Remotion。`motion` 只记钩子 |
 | `skills/talkcut/` | 新建 | 一份技能，Codex 与 WorkBuddy 都加载 |
 
-「复用」指以后按 MIT 保留版权声明再迁入源码。当前 `engine/` 只有这份边界说明。
+移植文件保留 sayframe 的 MIT 版权声明。
 
 ## 数据
 

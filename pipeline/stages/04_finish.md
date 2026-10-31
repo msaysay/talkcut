@@ -21,6 +21,6 @@
 - 标题文本
 - 最终成片路径与工程目录，便于继续改
 
-## 尚未接入
+## 现在会导出的部分
 
-封面排版与导出要等 `engine/` 移植 sayframe 的 `covers`、`planning`、`editor_export`。骨架里的 `cover` 与 `export` 会拒绝执行。
+`export` 把粗剪片段拼成 `export/final.mp4`，并打一个交付 zip。`cover` 从第一段保留画面抽一帧，不做标题排版。Remotion 动效不在这一步里。

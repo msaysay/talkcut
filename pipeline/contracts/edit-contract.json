@@ -1,6 +1,6 @@
 {
   "format": "talkcut-edit-v0",
-  "status": "documented fields only; no validator in this scaffold",
+  "status": "apply executes summary, revision, order, removeSpans, removeWords, keepHumanMoments, and cleanup",
   "upstream": {
     "repo": "https://github.com/msaysay/sayframe",
     "license": "MIT",
@@ -9,8 +9,9 @@
     "note": "Same idea as sayframe typed source edits: order and display changes bind to real segment ids. TalkCut adds rough-cut reasons and a motion preset slot."
   },
   "stage": "Accepted only after the user confirms a direction. Rough cut writes this document. Motion and finish read the same project revision.",
-  "required": ["summary", "revision"],
+  "required": ["summary", "revision", "confirmed"],
   "fields": {
+    "confirmed": "must be true. propose does not export, and apply refuses an unconfirmed file",
     "summary": "what this edit changes, in the user's language",
     "revision": "revision string from the latest read; stale revisions are rejected",
     "order": "optional. Kept segment ids in final order, no duplicates. Ids left out stay in the source and can be restored. This does not destroy media.",
@@ -21,6 +22,20 @@
         "heuristicId": "one of methodology cut_heuristics ids"
       }
     ],
+    "removeWords": [
+      {
+        "id": "real segment id",
+        "indices": [0],
+        "quote": "optional verbatim join of those words; rejected when it does not match",
+        "reason": "breath | filler | silence"
+      }
+    ],
+    "cleanup": {
+      "breath": "drop 〔气口〕 and kind=breath words",
+      "filler": "drop standalone 呃/嗯/啊/额/哦/um/uh tokens unless disfluency_grammar holds them",
+      "silence": "drop 〔静音〕 and kind=silence words",
+      "confirmed": "apply refuses the file unless confirmed is true"
+    },
     "keepHumanMoments": [
       {
         "id": "real segment id",
@@ -51,7 +66,7 @@
       "coverTitlePattern": "one of cover_title_patterns ids"
     }
   },
-  "removeSpansNote": "Documented for the future rough cut. The scaffold does not delete audio. A later port should refuse cuts the speech engine cannot prove, and should prefer keeping human breaths over a machine-gun jump cut.",
+  "removeSpansNote": "removeSpans drops a whole segment. removeWords and cleanup cut inside a segment and the export uses those shorter spans. keepHumanMoments skips automatic cleanup on that segment. Explicit removeWords still cut.",
   "forbidden": "Model-supplied audio timestamps, shell commands, asset download URLs, credentials, and example ids used as if they belonged to the current media.",
   "revisionRule": "apply must send the revision from the latest read. If it does not match, read again and do not overwrite."
 }

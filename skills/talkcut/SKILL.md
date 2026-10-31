@@ -12,7 +12,7 @@ version: 0.1.0
 
 你是口播剪辑助手。用当前宿主里用户选中的模型理解内容。不要另起一个聊天模型，不要索取 API Key，也不要把宿主账号凭据交给脚本。
 
-语音识别、原音对齐和编码以后由本机引擎完成。本骨架里这些步骤还没接上。除 `doctor` 外，CLI 子命令会拒绝执行。把拒绝原因原样告诉用户。
+语音识别、原音对齐和编码由本机引擎完成。默认不下载语音模型：`import` 用能量分段。用户要转写时再 `setup --with-asr`，然后 `import --asr whisper`。命令失败时把 stderr 原样告诉用户。
 
 术语用 `methodology/04-naming-glossary.md` 里的工具内名称。不要把培训师个人姓名写进方案、字幕或提交说明。
 
@@ -23,17 +23,17 @@ version: 0.1.0
 ```text
 python3 <仓库根>/pipeline/cli/talkcut.py doctor
 python3 <仓库根>/pipeline/cli/talkcut.py setup
-python3 <仓库根>/pipeline/cli/talkcut.py import --video "<绝对路径>" --project "<新的工程目录>"
+python3 <仓库根>/pipeline/cli/talkcut.py import --video "<绝对路径>" --project "<新的空目录>"
 python3 <仓库根>/pipeline/cli/talkcut.py read --project "<工程目录>"
 python3 <仓库根>/pipeline/cli/talkcut.py propose --project "<工程目录>"
-python3 <仓库根>/pipeline/cli/talkcut.py choose-plan --project "<工程目录>"
-python3 <仓库根>/pipeline/cli/talkcut.py apply --project "<工程目录>"
+python3 <仓库根>/pipeline/cli/talkcut.py choose-plan --project "<工程目录>" --direction rough-cleanup
+python3 <仓库根>/pipeline/cli/talkcut.py apply --project "<工程目录>" --changes "<changes.json>"
 python3 <仓库根>/pipeline/cli/talkcut.py motion --project "<工程目录>"
 python3 <仓库根>/pipeline/cli/talkcut.py cover --project "<工程目录>"
 python3 <仓库根>/pipeline/cli/talkcut.py export --project "<工程目录>"
 ```
 
-`doctor` 通过只说明骨架文件还在。`setup` 尚未安装 ffmpeg 或语音模型。
+`import` 可加 `--transcript <words.json>`，或 `--asr whisper`（需先 `setup --with-asr`）。`changes.json` 必须带最新 `revision` 和 `"confirmed": true`。没有原片时，用 `examples/make_synthetic.py` 生成蜂鸣、气口和静音，不要假装那是真人素材。
 
 ## 顺序
 
@@ -75,8 +75,8 @@ python3 <仓库根>/pipeline/cli/talkcut.py export --project "<工程目录>"
 
 ## 现在还没有
 
-- `engine/` 里的 sayframe 模块（对齐、切口、清理、导出、封面、规划）
-- `setup` 的运行时安装
-- `motion-pack/presets/` 里的真实模板
+- `motion-pack/presets/` 里的鼓点模板。`motion` 只记下钩子，导出不走 Remotion
+- 语义上的多方向规划。`propose` 只根据气口、静音、填充词和营销钩子给一个方向
+- 语音模型。不运行 `setup --with-asr` 就不会下载
 
 这些缺口写在 `engine/README.md`、`docs/ROADMAP.md` 和 `motion-pack/presets/README.md`。

@@ -1,6 +1,6 @@
 # pipeline
 
-TalkCut 的流水线骨架：一份 CLI、两份合同、四段说明。引擎还没接上，所以除 `doctor` 以外的子命令都会拒绝执行。
+`doctor` 和 `setup` 检查本机 ffmpeg。`import`、`apply`、`export` 会跑完一条粗剪。语音模型是可选的。
 
 ## 命令
 
@@ -8,25 +8,33 @@ TalkCut 的流水线骨架：一份 CLI、两份合同、四段说明。引擎�
 
 ```bash
 python3 pipeline/cli/talkcut.py doctor
-python3 pipeline/cli/talkcut.py --help
+python3 pipeline/cli/talkcut.py setup
+python3 pipeline/cli/talkcut.py import --video "<原片>" --project "<空目录>"
+python3 pipeline/cli/talkcut.py read --project "<工程>"
+python3 pipeline/cli/talkcut.py propose --project "<工程>"
+python3 pipeline/cli/talkcut.py choose-plan --project "<工程>" --direction rough-cleanup
+python3 pipeline/cli/talkcut.py apply --project "<工程>" --changes changes.json
+python3 pipeline/cli/talkcut.py export --project "<工程>"
 ```
 
-稳定子命令（技能按这个顺序写，实现以后不要改名）：
+`import` 默认 `--asr energy`。已有逐词时间用 `--transcript`。`--asr whisper` 需要先 `setup --with-asr`。
 
-```text
-doctor → setup → import → read → propose → choose-plan → apply → motion → cover → export
+`propose` 只写 `proposal.json`，不生成成片。`apply` 要求 changes 里 `"confirmed": true`，并且 `revision` 与最近一次 `read` 一致。
+
+`motion` 记下 `motion-pack/` 钩子。`cover` 在粗剪之后抽一帧。
+
+没有口播原片时：
+
+```bash
+python3 examples/make_synthetic.py --out examples/out
 ```
-
-`propose` 只保存方向。用户确认之前不能 `choose-plan`，更不能 `export`。
 
 ## 合同
 
-| 文件 | 对应阶段 | 上游借鉴 |
-|---|---|---|
-| `contracts/planning-contract.json` | 第 1 段方向建议 | sayframe `references/planning-contract.json` |
-| `contracts/edit-contract.json` | 确认之后的粗剪修改 | sayframe `references/edit-contract.json` |
-
-两份文件用字段说明表达形状，不是 JSON Schema，也还没有校验器。引用必须来自当前 `read` 的原句 id，不能把示例 id 当成这条片子的素材。
+| 文件 | 作用 |
+|---|---|
+| `contracts/planning-contract.json` | 方向建议的字段。`propose` 写出其中的轻量子集 |
+| `contracts/edit-contract.json` | `apply` 读取的修改。`removeWords` 和 `cleanup` 会改音轨 |
 
 ## 阶段说明
 

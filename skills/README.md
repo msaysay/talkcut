@@ -26,4 +26,4 @@ Codex 读取 frontmatter 里的 `name` 与 `description`。流程以正文为准
 
 第 1 段 `propose` 只出方向。用户明确选定一个方向之前，不能 `choose-plan`，不能 `export`。字幕和画面标题是两个独立开关，用户没说的保持关闭。
 
-`doctor` 目前只检查骨架文件。`setup` 以及剪辑子命令都会说明尚未实现并以非 0 退出。宿主应把这个结果告诉用户，不要改说成已经出片。
+`doctor` 会检查 ffmpeg。没有 faster-whisper 时仍然可以通过，因为默认走能量分段。`apply` 没有 `"confirmed": true` 时会拒绝，宿主应把拒绝原因告诉用户，不要改说成已经出片。
