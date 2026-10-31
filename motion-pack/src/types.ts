@@ -2,10 +2,14 @@ export type Emphasis = "hook" | "body" | "number" | "gold" | "cta" | "list";
 
 export type Caption = {
   text: string;
+  displayText?: string;
+  sourceText?: string;
   start: number;
   end: number;
   emphasis: Emphasis;
   keywords: string[];
+  font?: string;
+  effects?: string[];
 };
 
 export type FaceBox = {x: number; y: number; w: number; h: number};
@@ -26,7 +30,8 @@ export type Theme = {
   compositionId: string;
   coverCompositionId?: string;
   name: string;
-  motion: "fade" | "beat-punch";
+  motion: "fade" | "beat-punch" | "settle" | "slash" | "morph";
+  aesthetic?: string;
   fps: number;
   width: number;
   height: number;
@@ -46,6 +51,10 @@ export type Theme = {
     goldSize: number;
     ctaSize: number;
     listSize: number;
+    maxLines?: number;
+    charsPerLine?: number;
+    bandCenter?: number;
+    minScale?: number;
   };
   music: {
     speechVolume: number;
@@ -76,4 +85,6 @@ export type MotionProps = {
   segments?: LayoutSegment[];
   personFile?: string | null;
   personFrom?: number;
+  sfxCues?: {at: number; id: string}[];
+  audio?: "voice-led";
 };

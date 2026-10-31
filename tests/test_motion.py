@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
 import tempfile
@@ -14,7 +15,7 @@ if str(ROOT) not in sys.path:
 
 from engine.beats import beats_from_bpm, detect_beats, write_drum_bed
 from engine.media import load_pcm, probe
-from engine.motion import captions_from_edit, classify_caption, load_preset, render_motion
+from engine.motion import captions_from_edit, classify_caption, list_presets, load_preset, render_motion, segments_from_plan, split_caption_phrases, _music_track
 from engine.pipeline import apply_edit, import_media
 from engine.runtime import require_ffmpeg
 from engine.synthetic import make_breath_demo
@@ -77,6 +78,144 @@ class MotionPropsTest(unittest.TestCase):
             self.assertIn("三", captions[0]["keywords"])
             self.assertEqual(captions[2]["emphasis"], "gold")
             self.assertLess(captions[0]["end"], captions[1]["start"] + 0.05)
+            for earlier, later in zip(captions, captions[1:]):
+                self.assertLessEqual(earlier["end"], later["start"])
+
+    def test_phrases_split_on_punctuation_pause_and_length(self):
+        phrases = split_caption_phrases(
+            [
+                {
+                    "text": "先把判断说清，再给一个例子。",
+                    "start": 0,
+                    "end": 3,
+                    "emphasis": "body",
+                    "keywords": [],
+                }
+            ]
+        )
+        self.assertEqual([item["text"] for item in phrases], ["先把判断说清", "再给一个例子"])
+        paused = split_caption_phrases(
+            [{"text": "先说判断……再补一句", "start": 0, "end": 2, "emphasis": "body", "keywords": []}]
+        )
+        self.assertEqual([item["text"] for item in paused], ["先说判断", "再补一句"])
+        whole = "我认为一条片子只讲一个判断其余都先放下"
+        kept = split_caption_phrases(
+            [{"text": whole, "start": 1, "end": 4, "emphasis": "body", "keywords": ["一个"]}]
+        )
+        self.assertEqual([item["text"] for item in kept], [whole])
+        self.assertEqual(kept[0]["displayText"], whole)
+        self.assertNotIn("…", kept[0]["text"])
+        self.assertNotIn("...", kept[0]["text"])
+        long_text = "我认为一条片子只讲一个判断其余都先放下这句话也要完整读完不能断在半个字上后面这句也要读完"
+        wrapped = split_caption_phrases(
+            [{"text": long_text, "start": 1, "end": 6, "emphasis": "body", "keywords": ["一个"]}]
+        )
+        self.assertGreater(len(wrapped), 1)
+        self.assertEqual("".join(item["text"] for item in wrapped), long_text)
+        self.assertTrue(all(len(item["text"]) <= 40 for item in wrapped))
+        self.assertTrue(all(item["displayText"] == item["text"] for item in wrapped))
+        self.assertTrue(all("…" not in item["text"] and "..." not in item["text"] for item in wrapped))
+        self.assertIn("一个", "".join(item["text"] for item in wrapped))
+        overlapping = split_caption_phrases(
+            [
+                {"text": "第一句", "start": 0, "end": 1.2, "emphasis": "body", "keywords": []},
+                {"text": "第二句", "start": 1.0, "end": 2.0, "emphasis": "body", "keywords": []},
+            ]
+        )
+        self.assertLessEqual(overlapping[0]["end"], overlapping[1]["start"])
+        for earlier, later in zip(phrases, phrases[1:]):
+            self.assertLessEqual(earlier["end"], later["start"])
+            self.assertGreaterEqual(later["end"] - later["start"], 0.04)
+
+    def test_graphic_card_does_not_repeat_the_sentence(self):
+        segments, captions = segments_from_plan(
+            {
+                "items": [
+                    {
+                        "layout": "v2",
+                        "start": 0,
+                        "end": 2,
+                        "text": "先说判断，再给例子。",
+                        "roleLabel": "观点",
+                        "emphasis": "body",
+                        "keywords": [],
+                        "font": "body",
+                        "effects": [],
+                    }
+                ]
+            }
+        )
+        self.assertEqual(segments[0]["body"], "")
+        self.assertEqual(segments[0]["title"], "观点")
+        self.assertGreater(len(captions), 1)
+        self.assertEqual("".join(item["text"] for item in captions), "先说判断再给例子")
+        self.assertTrue(all("…" not in item["text"] and "..." not in item["text"] for item in captions))
+
+    def test_music_track_skips_drum_bed_without_a_file(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            folder = Path(temporary)
+            track, beats, rate = _music_track(folder, 2.0, None, None, "ffmpeg")
+            self.assertIsNone(track)
+            self.assertEqual(beats, [])
+            self.assertIsNone(rate)
+            self.assertFalse((folder / "motion" / "public" / "music.wav").exists())
+            track, beats, rate = _music_track(folder, 2.0, None, 120, "ffmpeg")
+            self.assertIsNone(track)
+            self.assertEqual(beats[:3], [0.0, 0.5, 1.0])
+            self.assertFalse((folder / "motion" / "public" / "music.wav").exists())
+
+    def test_opus_presets_duck_and_do_not_add_a_bed(self):
+        ids = {item["id"] for item in list_presets()}
+        self.assertIn("opus-clean", ids)
+        self.assertIn("opus-punch", ids)
+        clean = load_preset("opus-clean")
+        punch = load_preset("opus-punch")
+        self.assertEqual(clean["motion"], "settle")
+        self.assertEqual(punch["motion"], "slash")
+        self.assertEqual(clean["caption"]["maxLines"], 2)
+        self.assertEqual(punch["caption"]["maxLines"], 2)
+        self.assertEqual(clean["caption"]["charsPerLine"], 18)
+        self.assertEqual(punch["caption"]["charsPerLine"], 18)
+        for preset in (clean, punch):
+            music = preset["music"]
+            self.assertLess(music["speechVolume"], music["gapVolume"])
+            self.assertLess(music["ctaVolume"], music["speechVolume"])
+            self.assertLessEqual(preset["maxColors"], 3)
+
+    def test_douyin_frame_spec_is_on_the_talking_head_presets(self):
+        guide = json.loads((ROOT / "motion-pack" / "guide.json").read_text(encoding="utf-8"))
+        self.assertEqual(set(guide["roles"]), {"script", "presenter", "subtitles", "music"})
+        names = ("opus-clean", "opus-punch", "card-knowledge", "eva-morph-v")
+        for name in names:
+            preset = load_preset(name)
+            margins = preset["platformMargins"]
+            self.assertGreaterEqual(margins["douyinBottom"], 0.18)
+            self.assertLessEqual(margins["douyinBottom"], 0.20)
+            self.assertEqual(margins["douyinRight"], 0.14)
+            self.assertGreaterEqual(margins["maskMinBottomPx"], 180)
+            self.assertGreaterEqual(margins["pipPx"], 360)
+            self.assertLessEqual(margins["pipPx"], 400)
+            box = preset["caption"]
+            self.assertGreaterEqual(box["bodySize"], 54)
+            self.assertLessEqual(box["bodySize"], 64)
+            self.assertGreaterEqual(box["hookSize"], 76)
+            self.assertLessEqual(box["hookSize"], 84)
+            self.assertGreaterEqual(box["numberSize"], 92)
+            self.assertLessEqual(box["numberSize"], 104)
+            self.assertEqual(box["charsPerLine"], 18)
+            self.assertEqual(box["maxLines"], 2)
+            self.assertGreaterEqual(box["bandCenter"], 0.65)
+            self.assertLessEqual(box["bandCenter"], 0.70)
+            self.assertIn("rgba(10,14,16,0.", preset["colors"]["pill"])
+            music = preset["music"]
+            self.assertGreaterEqual(music["speechVolume"], 0.12)
+            self.assertLessEqual(music["speechVolume"], 0.14)
+            self.assertGreaterEqual(music["gapVolume"], 0.40)
+            self.assertLessEqual(music["gapVolume"], 0.48)
+        self.assertEqual(load_preset("card-knowledge")["colors"]["accent"], "#8FCBB8")
+        self.assertEqual(load_preset("opus-punch")["colors"]["accent"], "#FFB703")
+        self.assertEqual(load_preset("eva-morph-v")["motion"], "morph")
+        self.assertEqual(load_preset("eva-morph-v")["colors"]["accent"], "#d4ff2e")
 
 
 class RenderPresetTest(unittest.TestCase):

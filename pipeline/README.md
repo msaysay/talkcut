@@ -21,7 +21,7 @@ python3 pipeline/cli/talkcut.py export --project "<工程>"
 
 `propose` 只写 `proposal.json`，不生成成片。`apply` 要求 changes 里 `"confirmed": true`，并且 `revision` 与最近一次 `read` 一致。
 
-`motion --preset clean-knowledge` 用 Remotion 渲染竖屏字幕和配乐。`export` 默认仍是 FFmpeg；`--via remotion --preset <名字>` 改走合成。`cover` 默认抽帧，`--via remotion` 出标题静帧。
+`plan --orientation vertical` 在动效之前写出 `layout-plan.json` 和一张句子表格。`motion` 默认按这份计划渲染。`export` 默认仍是 FFmpeg；`--via remotion --preset <名字>` 同样读取计划。`cover` 默认抽帧，`--via remotion` 出标题静帧。
 
 没有口播原片时：
 

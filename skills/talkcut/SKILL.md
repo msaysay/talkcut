@@ -56,14 +56,44 @@ python3 <仓库根>/pipeline/cli/talkcut.py export --project "<工程目录>"
 5. **apply**  
    粗剪。去掉钩子前的准备动作、过长静音和无关支线；按钩子与开—展—收重排。保留笑、气口和自然反应。修改形状见 `pipeline/contracts/edit-contract.json`。用最近一次 read 的 revision。
 
-6. **motion**  
-   粗剪之后再上字幕和配乐。预设只有两套，写在 `motion-pack/presets/`：`clean-knowledge`（干净知识口播）、`gold-line`（强节奏金句）。
+6. **plan（渲染前的确认点）**  
+   粗剪之后、动效之前，先出一份可手改的版式计划。默认用离线规则，不调用大模型。
 
    ```text
-   python3 <仓库根>/pipeline/cli/talkcut.py motion --project "<工程目录>" --preset clean-knowledge --orientation vertical --music "<用户的BGM>"
+   python3 <仓库根>/pipeline/cli/talkcut.py plan --project "<工程目录>" --orientation vertical
    ```
 
-   `--orientation landscape` 是 1920×1080。两套预设都要能用这两种画幅。用户没给音乐就不要编造曲目，省略 `--music`。人声段配乐会自动变小。用户认可后加 `--lock`。
+   终端会打印表格：句子、角色、版式、理由。文件在工程里的 `layout-plan.json` 和 `layout-plan.md`。规则在 `methodology/layout-rules.json`。把表格给用户看。用户要改某一句的角色或版式，就改 JSON，再继续。不要擅自开渲染。
+
+   若用户希望由当前宿主模型分类，而不是关键词规则：
+
+   ```text
+   python3 <仓库根>/pipeline/cli/talkcut.py plan --project "<工程目录>" --classify agent
+   ```
+
+   阅读写出的 `classify-prompt.md`，按 `classify-schema.json` 只填每句的 role，保存为 `classify-result.json`。不要改原句，不要自己调用别的模型 API。然后再运行：
+
+   ```text
+   python3 <仓库根>/pipeline/cli/talkcut.py plan --project "<工程目录>" --classify agent --roles "<工程目录>/classify-result.json"
+   ```
+
+7. **先看静帧，再渲全片**  
+   用户确认 `layout-plan.json` 之后，先出每句中点的静帧。计划形状见 `pipeline/contracts/layout-plan.schema.json`。口播预设优先 `card-knowledge` 或 `opus-clean`，人脸窗用 `eva-morph-v`，也可以用 `opus-punch`、`clean-knowledge` 或 `gold-line`。
+
+   ```text
+   python3 <仓库根>/pipeline/cli/talkcut.py motion --project "<工程目录>" --preset card-knowledge --orientation vertical --stills
+   ```
+
+   把 `export/stills/` 给用户看。用户确认后再去掉 `--stills` 渲全片。不要跳过静帧直接交成片。
+
+8. **motion**  
+   `motion` 默认读取 `layout-plan.json`。
+
+   ```text
+   python3 <仓库根>/pipeline/cli/talkcut.py motion --project "<工程目录>" --preset card-knowledge --orientation vertical
+   ```
+
+   `--orientation landscape` 是 1920×1080。这些预设都要能用这两种画幅。用户没给音乐就不要编造曲目，省略 `--music`，也不要生成节拍器。人声段配乐会自动变小。用户认可后加 `--lock`。
 
    版式合集（不要把视频提交进仓库）：
 
@@ -72,10 +102,10 @@ python3 <仓库根>/pipeline/cli/talkcut.py export --project "<工程目录>"
    python3 <仓库根>/pipeline/cli/talkcut.py motion --project "<工程目录>" --preset clean-knowledge --orientation vertical --reel --video "<下载的 mp4>"
    ```
 
-7. **cover**  
+9. **cover**  
    需要封面时再做。公式是关键词 + 数字 + 人。人物约占画面三分之二。关掉画面标题不等于默许封面标题。
 
-8. **export**  
+10. **export**  
    默认用 FFmpeg 导出粗剪，路径是 `export/final.mp4`。用户要竖屏字幕成片时用 `export --via remotion --preset <名字>`，或直接采用上一步 `motion` 写出的 `export/motion-<preset>.mp4`。给出真实路径。做不到就说明卡在哪一步。
 
 ## 硬规则
@@ -90,6 +120,6 @@ python3 <仓库根>/pipeline/cli/talkcut.py export --project "<工程目录>"
 
 - 语义上的多方向规划。`propose` 只根据气口、静音、填充词和营销钩子给一个方向
 - 语音模型。不运行 `setup --with-asr` 就不会下载
-- 用户没提供的真实配乐。生成的底乐只为卡点预览
+- 用户没提供的真实配乐。省略 `--music` 时没有配乐，也不生成节拍器
 
 这些缺口写在 `engine/README.md`、`docs/ROADMAP.md` 和 `motion-pack/presets/README.md`。

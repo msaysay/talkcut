@@ -1,0 +1,57 @@
+{
+  "id": "eva-morph-v",
+  "compositionId": "eva-morph-v",
+  "coverCompositionId": "cover-still",
+  "name": "竖屏人脸窗",
+  "aesthetic": "eva-morph-v",
+  "motion": "morph",
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "colors": {
+    "ink": "#F7F4EA",
+    "accent": "#d4ff2e",
+    "pill": "rgba(10,14,16,0.58)",
+    "stroke": "#10140A",
+    "badge": "#EEF6C8"
+  },
+  "caption": {
+    "bottom": 360,
+    "side": 72,
+    "bodySize": 56,
+    "hookSize": 78,
+    "numberSize": 96,
+    "goldSize": 64,
+    "ctaSize": 70,
+    "listSize": 56,
+    "maxLines": 2,
+    "charsPerLine": 18,
+    "bandCenter": 0.66,
+    "minScale": 0.96
+  },
+  "music": {
+    "speechVolume": 0.12,
+    "gapVolume": 0.42,
+    "ctaVolume": 0.07
+  },
+  "maxColors": 3,
+  "frames": {
+    "vertical": {"width": 1080, "height": 1920},
+    "landscape": {"width": 1920, "height": 1080}
+  },
+  "platformMargins": {
+    "douyinBottom": 0.19,
+    "douyinRight": 0.14,
+    "maskMinBottomPx": 184,
+    "pipPx": 380
+  },
+  "fontRoles": {
+    "body": "body",
+    "hook": "hook",
+    "cover": "cover",
+    "gold": "gold",
+    "number": "number",
+    "note": "note",
+    "fallback": "fallback"
+  }
+}

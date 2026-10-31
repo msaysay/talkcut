@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "canvas": {"width": 1080, "height": 1920, "fps": 30},
+  "roles": {
+    "script": {
+      "title": "文稿",
+      "note": "逐句口播。例子是 examples/demo-script.json。displayText 可以改显示，不改这一份原句。"
+    },
+    "presenter": {
+      "title": "出镜",
+      "note": "竖屏口播画面。本机粗剪一般叫 rough.mp4。身高约占 0.70–0.75 画高，视线约 0.28–0.35 画高，略偏左。"
+    },
+    "subtitles": {
+      "title": "字幕",
+      "note": "屏幕上用 displayText。源句留在 text / sourceText。默认一行、每行不超过 18 字，最多两行，禁止省略号。"
+    },
+    "music": {
+      "title": "配乐",
+      "note": "可选。默认 voice-led，不生成节拍器。传入后人声段压到 0.12–0.14，间隙 0.40–0.48。音效只打在切点。"
+    }
+  },
+  "safe": {
+    "douyinBottom": [0.18, 0.2],
+    "douyinRight": 0.14,
+    "maskMinBottomPx": 180,
+    "faceExpand": 0.18,
+    "maxFaceSeconds": 11,
+    "pipScale": 0.28,
+    "pipPx": [360, 400],
+    "morph": {"width": 0.42, "height": 0.28},
+    "split": 0.46,
+    "presenterHeight": [0.7, 0.75],
+    "eyeLine": [0.28, 0.35],
+    "punch": [1, 1.18, 1.32]
+  },
+  "caption": {
+    "body": [54, 64],
+    "hook": [76, 84],
+    "number": [92, 104],
+    "charsPerLine": 18,
+    "maxLines": 2,
+    "bandCenter": [0.65, 0.7],
+    "fadeFrames": 4,
+    "highlights": ["#8FCBB8", "#FFB703", "#d4ff2e"]
+  },
+  "audio": {
+    "speechVolume": [0.12, 0.14],
+    "gapVolume": [0.4, 0.48],
+    "default": "voice-led",
+    "sfx": "events-only"
+  }
+}

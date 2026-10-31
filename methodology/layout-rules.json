@@ -1,0 +1,126 @@
+{
+  "version": 1,
+  "roles": ["hook", "pain", "opinion", "case", "number", "list", "gold", "cta", "bridge"],
+  "labels": {
+    "hook": "钩子",
+    "pain": "痛点",
+    "opinion": "观点",
+    "case": "案例",
+    "number": "数字",
+    "list": "清单",
+    "gold": "金句",
+    "cta": "行动号召",
+    "bridge": "过渡"
+  },
+  "classify": {
+    "hookMaxStart": 3.0,
+    "priority": ["cta", "gold", "list", "case", "pain", "number", "bridge", "opinion"],
+    "default": "opinion",
+    "patterns": {
+      "cta": ["评论", "私信", "关注", "预约", "置顶"],
+      "gold": ["真正", "金句", "往往", "记住这句"],
+      "list": ["第一步", "第二步", "第三步", "首先", "其次", "清单"],
+      "case": ["比如", "案例", "有一次", "故事"],
+      "pain": ["痛点", "最痛", "踩坑", "浪费", "麻烦"],
+      "number": ["\\d", "倍", "百分之", "[二三四五六七八九十]个"],
+      "bridge": ["接下来", "所以", "那么", "换句话说"],
+      "opinion": ["我认为", "其实", "判断", "观点"]
+    }
+  },
+  "layouts": {
+    "hook": {
+      "vertical": "v1",
+      "verticalAlternate": "v6",
+      "landscape": "h4",
+      "landscapeAlternate": "h1",
+      "emphasis": "hook",
+      "font": "hook",
+      "effects": ["slash-in"]
+    },
+    "pain": {
+      "vertical": "v2",
+      "verticalAlternate": "v4",
+      "landscape": "h3",
+      "landscapeAlternate": "h2",
+      "emphasis": "body",
+      "font": "body",
+      "effects": ["highlight"]
+    },
+    "opinion": {
+      "vertical": "v1",
+      "verticalAlternate": "v4",
+      "landscape": "h4",
+      "landscapeAlternate": "h2",
+      "emphasis": "body",
+      "font": "body",
+      "effects": ["highlight"]
+    },
+    "case": {
+      "vertical": "v3",
+      "verticalAlternate": "v2",
+      "landscape": "h1",
+      "landscapeAlternate": "h2",
+      "emphasis": "body",
+      "font": "body",
+      "effects": ["mask-morph"]
+    },
+    "number": {
+      "vertical": "v2",
+      "verticalAlternate": "v1",
+      "landscape": "h3",
+      "landscapeAlternate": "h4",
+      "emphasis": "number",
+      "font": "number",
+      "effects": ["number-roll", "highlight"]
+    },
+    "list": {
+      "vertical": "v4",
+      "verticalAlternate": "v2",
+      "landscape": "h2",
+      "landscapeAlternate": "h1",
+      "emphasis": "list",
+      "font": "body",
+      "effects": ["lower-third"]
+    },
+    "gold": {
+      "vertical": "v5",
+      "verticalAlternate": "v1",
+      "landscape": "h5",
+      "landscapeAlternate": "h4",
+      "emphasis": "gold",
+      "font": "gold",
+      "effects": ["behind", "push-in"]
+    },
+    "cta": {
+      "vertical": "v1",
+      "verticalAlternate": "v6",
+      "landscape": "h4",
+      "landscapeAlternate": "h5",
+      "emphasis": "cta",
+      "font": "hook",
+      "effects": ["lower-third"]
+    },
+    "bridge": {
+      "vertical": "v6",
+      "verticalAlternate": "v4",
+      "landscape": "h1",
+      "landscapeAlternate": "h2",
+      "emphasis": "body",
+      "font": "note",
+      "effects": []
+    }
+  },
+  "families": {
+    "face": ["v1", "v5", "h4", "h5"],
+    "graphic": ["v2", "v3", "v4", "v6", "h1", "h2", "h3"]
+  },
+  "rhythm": {
+    "maxSameLayoutSentences": 2,
+    "maxSameLayoutSeconds": 4.5,
+    "minLayoutSeconds": 1.5,
+    "maxGold": 1,
+    "alternateFaceAndGraphic": true,
+    "beatSnapSeconds": 0.22,
+    "maxFaceSeconds": 11
+  }
+}

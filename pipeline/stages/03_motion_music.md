@@ -1,23 +1,31 @@
 # 3 · 动效与配乐
 
-粗剪完成之后，用 Remotion 把成片收成竖屏 1080×1920：下三分之一字幕，人声底下的鼓点配乐。
+粗剪完成之后，用 Remotion 把成片收成竖屏 1080×1920：同一时刻只留一条字幕。配乐只有传入 `--music` 时才叠上，并在人声下压低，不替换人声。
 
 ## 输入
 
 - 已 `apply` 的工程。没有 `export/final.mp4` 时，`motion` 会先用 FFmpeg 拼一版粗剪再往上叠
 - `motion-pack/presets/<name>/preset.json` 和同目录的组件
-- 可选的用户 BGM。不传文件时，生成一段无版权的节拍底乐，方便先看卡点
+- 可选的用户 BGM。不传 `--music` 时不生成节拍底乐，`musicFile` 为空，成片只留粗剪人声。传入后只把配乐压低，不抽掉人声
 
 ## 预设
 
 | id | 用途 |
 |---|---|
-| `clean-knowledge` | 干净知识口播。字幕淡入，数字用强调色，配乐在人声时压低 |
-| `gold-line` | 强节奏金句。节拍上轻微放大，顶栏闪动，金句带强调色下划 |
+| `card-knowledge` | 深色知识卡。抖音安全区、一行字幕、最多两行 |
+| `eva-morph-v` | 全屏人脸收到右下圆角窗 |
+| `opus-clean` | 紧凑知识口播。字幕最多两行且完整，字体角色分开 |
+| `opus-punch` | 数字砍入后锁成完整数字。配乐仍然只在传入时压低 |
+| `clean-knowledge` | 早一版干净知识口播。字幕淡入 |
+| `gold-line` | 早一版金句。顶栏闪动 |
 
 字幕角色来自 `methodology/EDIT_PIPELINE_HOOKS.json` 的 `caption_emphasis`：第一句是钩子，数字单独放大，`真正 / 金句` 走金句，`评论 / 私信 / 关注` 走 CTA 并再压低配乐。主色不超过 3 种。字幕离底边一截，不贴安全区。
 
 中文字体在渲染时从本机拷进工程（优先 Droid Sans Fallback，或 `TALKCUT_FONT`）。仓库不内置字体文件。
+
+## 按句选版式
+
+渲染前运行 `plan`。它读 `methodology/layout-rules.json`，给每句一个角色和版式，写成可手改的 `layout-plan.json`，并打印表格。`motion` 和 `export --via remotion` 默认按这份计划画。`--classify agent` 只生成给宿主模型的 prompt 和 schema，TalkCut 不调用大模型。
 
 ## 画幅和版式
 
@@ -53,7 +61,17 @@ python3 pipeline/cli/talkcut.py motion \
   --bpm 96
 ```
 
-省略 `--music` 时使用生成的底乐。省略 `--bpm` 且自带了音乐时，按音量突发起伏检测节拍。
+省略 `--music` 时没有配乐，也不生成节拍底乐。自带音乐时可以省略 `--bpm`，按音量起伏检测节拍。人声段音量约 0.12–0.14，间隙约 0.40–0.48。另一条可商用曲子用 `python3 examples/fetch_music.py` 下载后再传给 `--music`。
+
+本机对粗剪出片：
+
+```bash
+python3 pipeline/cli/talkcut.py plan --project <工程> --orientation vertical --video rough.mp4
+python3 pipeline/cli/talkcut.py motion --project <工程> --preset card-knowledge --stills
+python3 pipeline/cli/talkcut.py motion --project <工程> --preset card-knowledge
+```
+
+没有本机 `rough.mp4` 时，把 `--video` 换成 `examples/fetch_stock.py` 下载的 Pexels 口播。云端样片用的是这条公开素材。
 
 `--lock` 把预设 id 写进 `motion-pack/presets/approved.json`。满意之后下一条继续用这个名字，不要每条重做一套动画。
 

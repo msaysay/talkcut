@@ -79,6 +79,25 @@ PyAV, ONNX Runtime, and a SenseVoice ONNX build are sayframe setup dependencies.
 
 TalkCut does not relicense Remotion. Rendering calls the Remotion CLI; it does not vendor Remotion's source.
 
+## Douyin frame
+
+The 1080×1920 safe-area numbers in `motion-pack/guide.json` are a public short-video layout practice (bottom and right UI keep-out, caption band around the lower third). They are not copied from a template repository. Layout, morph, and caption code in this repo is original.
+
+## Motion references
+
+These MIT projects informed layout and caption motion. Their source is not copied into this repository.
+
+| Project | License | What TalkCut uses from it |
+| --- | --- | --- |
+| [Vibetool/talking-head-video](https://github.com/Vibetool/talking-head-video) | MIT | Circular PiP placement and dark knowledge-card contrast. `card-knowledge` is original |
+| [neutral-Stage/remotion-captioneer](https://github.com/neutral-Stage/remotion-captioneer) | MIT | Preset-shaped caption styles (pill, one keyword highlight) |
+| [GovinduSasanka/opus-motion-library](https://github.com/GovinduSasanka/opus-motion-library) | MIT | Number slice-in and wrapping long lines without an ellipsis |
+| Face-window morph | idea only | Full-frame face easing into a rounded window. `eva-morph-v` is original |
+
+## Optional music
+
+`examples/fetch_music.py` can download Kevin MacLeod, "Local Forecast" (incompetech.com), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The file is not committed. Credit that title and author if you use it. Omitting `--music` adds no music and no generated drum bed.
+
 ## Fonts (OFL-1.1)
 
 `setup --fonts` downloads these into `runtime/fonts`. The files are not committed. License texts are in `motion-pack/fonts/licenses/`. CSS uses role names (`TC Body`, `TC Hook`, …). The font files themselves are unmodified, so reserved font names stay inside the files.
