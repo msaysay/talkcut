@@ -1,6 +1,6 @@
 # TalkCut 路线图
 
-`motion` 支持竖屏和横屏，以及 v1–v6、h1–h5。字幕含逐字出现、数字滚动、钩子砍入和高亮。字在人身后用 MediaPipe 自拍分割。抖音边距仍是可配置比例，还没用真机截图校准。语义多方向和语音模型下载仍在后面。
+粗剪之后可以 `plan`：按 `methodology/layout-rules.json` 给每句角色和版式，写出可手改的 `layout-plan.json`。`motion` 默认按这份计划渲染。`--classify agent` 只生成给宿主模型的 prompt，不调用大模型 API。抖音边距还没用真机截图校准。语义多方向和语音模型下载仍在后面。
 
 ## MVP
 

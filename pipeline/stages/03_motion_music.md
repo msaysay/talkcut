@@ -19,6 +19,10 @@
 
 中文字体在渲染时从本机拷进工程（优先 Droid Sans Fallback，或 `TALKCUT_FONT`）。仓库不内置字体文件。
 
+## 按句选版式
+
+渲染前运行 `plan`。它读 `methodology/layout-rules.json`，给每句一个角色和版式，写成可手改的 `layout-plan.json`，并打印表格。`motion` 和 `export --via remotion` 默认按这份计划画。`--classify agent` 只生成给宿主模型的 prompt 和 schema，TalkCut 不调用大模型。
+
 ## 画幅和版式
 
 `--orientation vertical` 是 1080×1920，`landscape` 是 1920×1080。坐标按画幅比例算。

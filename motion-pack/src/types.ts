@@ -6,6 +6,8 @@ export type Caption = {
   end: number;
   emphasis: Emphasis;
   keywords: string[];
+  font?: string;
+  effects?: string[];
 };
 
 export type FaceBox = {x: number; y: number; w: number; h: number};

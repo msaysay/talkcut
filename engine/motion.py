@@ -223,6 +223,175 @@ def build_props(project: dict, preset: dict, beats: list[float], duration: float
     }
 
 
+def plan_path_for(folder: Path, orientation: str) -> Path | None:
+    sided = folder / f"layout-plan-{orientation}.json"
+    if sided.is_file():
+        return sided
+    generic = folder / "layout-plan.json"
+    if not generic.is_file():
+        return None
+    payload = json.loads(generic.read_text(encoding="utf-8"))
+    if payload.get("orientation") in (None, orientation):
+        return generic
+    return None
+
+
+def segments_from_plan(plan: dict, zones: dict | None = None) -> tuple[list[dict], list[dict]]:
+    from engine.safe_zones import choose_anchor, face_at
+
+    segments = []
+    captions = []
+    samples = (zones or {}).get("samples") or []
+    for item in plan["items"]:
+        face = face_at(samples, (item["start"] + item["end"]) / 2) if samples else None
+        if item["layout"] == "v3":
+            anchor = "middle"
+        elif item["layout"] == "h3":
+            anchor = "top"
+        else:
+            anchor = choose_anchor(face) if face else "bottom"
+        segments.append(
+            {
+                "layout": item["layout"],
+                "start": item["start"],
+                "end": item["end"],
+                "title": item.get("roleLabel") or item["layout"],
+                "body": item["text"],
+                "caption": item["text"],
+                "captionAnchor": anchor,
+                "face": face,
+            }
+        )
+        captions.append(
+            {
+                "text": item["text"],
+                "start": item["start"],
+                "end": item["end"],
+                "emphasis": item.get("emphasis") or "body",
+                "keywords": item.get("keywords") or [],
+                "font": item.get("font") or "body",
+                "effects": item.get("effects") or [],
+            }
+        )
+    return segments, captions
+
+
+def render_from_plan(
+    folder: Path,
+    plan_path: Path,
+    preset_name: str,
+    *,
+    music: Path | None = None,
+    bpm: float | None = None,
+    lock: bool = False,
+    orientation: str = "vertical",
+) -> dict:
+    plan = json.loads(plan_path.read_text(encoding="utf-8"))
+    if plan.get("orientation") != orientation:
+        raise TalkCutError("layout-plan.json 的画幅和 --orientation 不一致。请按这个画幅重新 plan。")
+    video = Path(plan.get("video") or "")
+    if not video.is_file():
+        raise TalkCutError("计划里的视频不存在。plan 时加上 --video，或改 layout-plan.json 里的 video。")
+    preset = apply_orientation(load_preset(preset_name), orientation)
+    ffmpeg, _ffprobe = require_ffmpeg()
+    duration = float(plan["duration"])
+    public = folder / "motion" / "public"
+    if public.exists():
+        shutil.rmtree(public)
+    public.mkdir(parents=True)
+    trimmed = public / "video.mp4"
+    subprocess.run(
+        [ffmpeg, "-y", "-v", "error", "-i", str(video), "-t", f"{duration:.3f}", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-an", str(trimmed)],
+        check=True,
+        capture_output=True,
+    )
+    zones = None
+    try:
+        models = detected_models()
+        from engine.safe_zones import detect_safe_zones, write_safe_zones
+
+        zones = detect_safe_zones(trimmed, duration, models["face"], ffmpeg)
+        write_safe_zones(zones, folder / "safe-zones.json")
+    except TalkCutError:
+        models = None
+    segments, captions = segments_from_plan(plan, zones)
+    person_file = None
+    person_from = 0.0
+    v5 = [item for item in plan["items"] if item["layout"] == "v5"]
+    if v5 and models:
+        from engine.cutout import build_person_webm
+        from engine.font_setup import FONT_DIR
+
+        person_from = float(v5[0]["start"])
+        person_file = public / "person.mp4"
+        gold = FONT_DIR / "NotoSerifSC-Black.ttf"
+        build_person_webm(
+            ffmpeg,
+            trimmed,
+            person_from,
+            float(v5[-1]["end"]),
+            models["segmenter"],
+            person_file,
+            label=v5[0]["text"],
+            font_path=gold if gold.is_file() else None,
+        )
+    try:
+        from engine.font_setup import ensure_fonts
+
+        role_fonts = ensure_fonts()
+    except TalkCutError:
+        role_fonts = {}
+    font_files = copy_role_fonts(public, role_fonts)
+    rate = bpm or float(plan.get("bpm") or 96)
+    _music_track(folder, duration, music, rate, ffmpeg)
+    fps = int(preset.get("fps") or 30)
+    props = {
+        "durationInFrames": max(1, int(round(duration * fps))),
+        "fps": fps,
+        "width": int(preset.get("width") or 1080),
+        "height": int(preset.get("height") or 1920),
+        "orientation": orientation,
+        "videoFile": "video.mp4",
+        "musicFile": "music.wav",
+        "fontFile": font_files.get("fallback") or "fonts/cjk.ttf",
+        "fontFiles": font_files,
+        "captions": captions,
+        "beats": plan.get("beats") or beats_from_bpm(duration, rate),
+        "nameplate": None,
+        "theme": preset,
+        "title": (captions[0]["text"][:18] if captions else preset.get("name") or ""),
+        "segments": segments,
+        "personFile": "person.mp4" if person_file else None,
+        "personFrom": person_from,
+    }
+    props_path = folder / "motion" / "props.json"
+    props_path.write_text(json.dumps(props, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    export_dir = folder / "export"
+    out = export_dir / f"motion-{preset['id']}{'' if orientation == 'vertical' else '-landscape'}.mp4"
+    _run_remotion("render", preset["compositionId"], out, props_path, public, crf=28)
+    record = {
+        "applied": True,
+        "fromPlan": str(plan_path),
+        "preset": preset["id"],
+        "movie": str(out),
+        "orientation": orientation,
+        "width": props["width"],
+        "height": props["height"],
+    }
+    if (folder / "project.json").is_file():
+        project = load(folder)
+        project["motion"] = record
+        save(folder, project)
+    if lock:
+        approved = {
+            "version": 1,
+            "preset": preset["id"],
+            "lockedAt": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+        }
+        (PRESETS / "approved.json").write_text(json.dumps(approved, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return record
+
+
 def render_motion(
     folder: Path,
     preset_name: str,
@@ -234,6 +403,17 @@ def render_motion(
     layout: str | None = None,
 ) -> dict:
     folder = Path(folder).expanduser().resolve()
+    planned = plan_path_for(folder, orientation)
+    if planned and layout is None:
+        return render_from_plan(
+            folder,
+            planned,
+            preset_name,
+            music=music,
+            bpm=bpm,
+            lock=lock,
+            orientation=orientation,
+        )
     preset = apply_orientation(load_preset(preset_name), orientation)
     ffmpeg, _ffprobe = require_ffmpeg()
     project = load(folder)
@@ -337,7 +517,7 @@ def render_with_props(composition: str, dest: Path, props_path: Path, public: Pa
     _run_remotion("render", composition, dest, props_path, public)
 
 
-def _run_remotion(kind: str, composition: str, dest: Path, props_path: Path, public: Path) -> None:
+def _run_remotion(kind: str, composition: str, dest: Path, props_path: Path, public: Path, crf: int | None = None) -> None:
     if not (PACK / "node_modules" / "remotion").is_dir():
         raise TalkCutError("motion-pack 依赖未安装。在 motion-pack/ 执行 npm install。")
     dest.parent.mkdir(parents=True, exist_ok=True)
@@ -353,6 +533,8 @@ def _run_remotion(kind: str, composition: str, dest: Path, props_path: Path, pub
         f"--public-dir={public}",
         "--overwrite",
     ]
+    if crf is not None and kind == "render":
+        command.append(f"--crf={crf}")
     try:
         completed = subprocess.run(command, cwd=PACK, capture_output=True, text=True, timeout=300)
     except subprocess.TimeoutExpired as exc:

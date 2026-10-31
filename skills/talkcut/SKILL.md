@@ -56,8 +56,29 @@ python3 <仓库根>/pipeline/cli/talkcut.py export --project "<工程目录>"
 5. **apply**  
    粗剪。去掉钩子前的准备动作、过长静音和无关支线；按钩子与开—展—收重排。保留笑、气口和自然反应。修改形状见 `pipeline/contracts/edit-contract.json`。用最近一次 read 的 revision。
 
-6. **motion**  
-   粗剪之后再上字幕和配乐。预设只有两套，写在 `motion-pack/presets/`：`clean-knowledge`（干净知识口播）、`gold-line`（强节奏金句）。
+6. **plan（渲染前的确认点）**  
+   粗剪之后、动效之前，先出一份可手改的版式计划。默认用离线规则，不调用大模型。
+
+   ```text
+   python3 <仓库根>/pipeline/cli/talkcut.py plan --project "<工程目录>" --orientation vertical
+   ```
+
+   终端会打印表格：句子、角色、版式、理由。文件在工程里的 `layout-plan.json` 和 `layout-plan.md`。规则在 `methodology/layout-rules.json`。把表格给用户看。用户要改某一句的角色或版式，就改 JSON，再继续。不要擅自开渲染。
+
+   若用户希望由当前宿主模型分类，而不是关键词规则：
+
+   ```text
+   python3 <仓库根>/pipeline/cli/talkcut.py plan --project "<工程目录>" --classify agent
+   ```
+
+   阅读写出的 `classify-prompt.md`，按 `classify-schema.json` 只填每句的 role，保存为 `classify-result.json`。不要改原句，不要自己调用别的模型 API。然后再运行：
+
+   ```text
+   python3 <仓库根>/pipeline/cli/talkcut.py plan --project "<工程目录>" --classify agent --roles "<工程目录>/classify-result.json"
+   ```
+
+7. **motion**  
+   用户确认表格之后再渲染。`motion` 默认读取 `layout-plan.json`。预设是 `clean-knowledge` 或 `gold-line`。
 
    ```text
    python3 <仓库根>/pipeline/cli/talkcut.py motion --project "<工程目录>" --preset clean-knowledge --orientation vertical --music "<用户的BGM>"
@@ -72,10 +93,10 @@ python3 <仓库根>/pipeline/cli/talkcut.py export --project "<工程目录>"
    python3 <仓库根>/pipeline/cli/talkcut.py motion --project "<工程目录>" --preset clean-knowledge --orientation vertical --reel --video "<下载的 mp4>"
    ```
 
-7. **cover**  
+8. **cover**  
    需要封面时再做。公式是关键词 + 数字 + 人。人物约占画面三分之二。关掉画面标题不等于默许封面标题。
 
-8. **export**  
+9. **export**  
    默认用 FFmpeg 导出粗剪，路径是 `export/final.mp4`。用户要竖屏字幕成片时用 `export --via remotion --preset <名字>`，或直接采用上一步 `motion` 写出的 `export/motion-<preset>.mp4`。给出真实路径。做不到就说明卡在哪一步。
 
 ## 硬规则

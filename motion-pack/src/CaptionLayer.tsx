@@ -3,11 +3,21 @@ import {interpolate, useCurrentFrame, useVideoConfig} from "remotion";
 import type {Caption, MotionProps} from "./types";
 import {marginsOf} from "./Stage";
 
-const familyFor = (emphasis: Caption["emphasis"]) => {
-  if (emphasis === "gold") return "TC Gold, TC Fallback, serif";
-  if (emphasis === "number") return "TC Number, TC Hook, TC Fallback, sans-serif";
-  if (emphasis === "hook" || emphasis === "cta") return "TC Hook, TC Cover, TC Body, TC Fallback, sans-serif";
-  return "TC Body, TC Fallback, sans-serif";
+const FONT_STACK: Record<string, string> = {
+  hook: "TC Hook, TC Cover, TC Body, TC Fallback, sans-serif",
+  cover: "TC Cover, TC Hook, TC Fallback, sans-serif",
+  gold: "TC Gold, TC Fallback, serif",
+  number: "TC Number, TC Hook, TC Fallback, sans-serif",
+  note: "TC Note, TC Fallback, sans-serif",
+  body: "TC Body, TC Fallback, sans-serif",
+};
+
+const familyFor = (caption: Caption) => {
+  if (caption.font && FONT_STACK[caption.font]) return FONT_STACK[caption.font];
+  if (caption.emphasis === "gold") return FONT_STACK.gold;
+  if (caption.emphasis === "number") return FONT_STACK.number;
+  if (caption.emphasis === "hook" || caption.emphasis === "cta") return FONT_STACK.hook;
+  return FONT_STACK.body;
 };
 
 const sizeFor = (props: MotionProps, emphasis: Caption["emphasis"], scale: number) => {
@@ -48,10 +58,12 @@ export const CaptionLayer: React.FC<{props: MotionProps; layout: string}> = ({pr
   const bottom = Math.max((props.theme.caption.bottom / 1920) * height, margins.douyinBottom * height);
   const right = margins.douyinRight * width;
   const shown = caption.text.slice(0, revealCount(caption.text, local, fps));
-  const slash = caption.emphasis === "hook" ? interpolate(local, [0, 8], [100, 0], {extrapolateRight: "clamp"}) : 0;
+  const effects = caption.effects ?? [];
+  const slash = caption.emphasis === "hook" || effects.includes("slash-in") ? interpolate(local, [0, 8], [100, 0], {extrapolateRight: "clamp"}) : 0;
   const highlight = interpolate(local, [4, 12], [0, 1], {extrapolateLeft: "clamp", extrapolateRight: "clamp"});
   const digit = caption.keywords.find((item) => /^\d+$/.test(item));
-  const body = digit ? (
+  const roll = Boolean(digit) && (caption.emphasis === "number" || effects.includes("number-roll"));
+  const body = roll && digit ? (
     <>
       {shown.split(digit)[0]}
       <NumberRoll value={Number(digit)} progress={Math.min(1, local / (fps * 0.55))} />
@@ -60,7 +72,7 @@ export const CaptionLayer: React.FC<{props: MotionProps; layout: string}> = ({pr
   ) : (
     shown
   );
-  const bar = layout === "h4";
+  const bar = layout === "h4" || effects.includes("lower-third");
   return (
     <div
       style={{
@@ -88,7 +100,7 @@ export const CaptionLayer: React.FC<{props: MotionProps; layout: string}> = ({pr
         <div
           style={{
             position: "relative",
-            fontFamily: familyFor(caption.emphasis),
+            fontFamily: familyFor(caption),
             fontSize: size,
             fontWeight: 700,
             lineHeight: 1.2,

@@ -19,6 +19,15 @@ if str(ROOT) not in sys.path:
 
 from engine.errors import TalkCutError
 from engine.font_setup import ensure_fonts
+from engine.layout_plan import (
+    apply_agent_roles,
+    build_plan,
+    load_rules,
+    load_script,
+    sentences_from_project,
+    write_agent_request,
+    write_plan,
+)
 from engine.motion import render_cover_still, render_motion
 from engine.reel import render_layout_reel
 from engine.pipeline import (
@@ -180,6 +189,29 @@ def command_cover(args: argparse.Namespace) -> int:
     return 0
 
 
+def command_plan(args: argparse.Namespace) -> int:
+    folder = Path(args.project).expanduser().resolve()
+    folder.mkdir(parents=True, exist_ok=True)
+    rules = load_rules()
+    if args.script:
+        sentences = load_script(Path(args.script))
+    else:
+        from engine.store import load
+
+        sentences = sentences_from_project(load(folder))
+    video = str(Path(args.video).expanduser().resolve()) if args.video else None
+    if args.classify == "agent" and not args.roles:
+        _print(write_agent_request(folder, sentences, rules))
+        return 0
+    if args.roles:
+        sentences = apply_agent_roles(sentences, Path(args.roles), rules)
+    plan = build_plan(sentences, args.orientation, rules, video=video, classify=args.classify, bpm=args.bpm or 96)
+    target, table = write_plan(folder, plan)
+    print(table.read_text(encoding="utf-8"))
+    _print({"plan": str(target), "table": str(table), "items": len(plan["items"]), "orientation": plan["orientation"]})
+    return 0
+
+
 def command_motion(args: argparse.Namespace) -> int:
     if args.reel:
         if not args.video:
@@ -227,6 +259,16 @@ def build_parser() -> argparse.ArgumentParser:
     reader = sub.add_parser("read", help="打印片段和 revision")
     reader.add_argument("--project", required=True)
     reader.set_defaults(func=command_read)
+
+    sentence_plan = sub.add_parser("plan", help="按句子生成可手改的 layout-plan.json")
+    sentence_plan.add_argument("--project", required=True)
+    sentence_plan.add_argument("--orientation", choices=["vertical", "landscape"], default="vertical")
+    sentence_plan.add_argument("--classify", choices=["rules", "agent"], default="rules")
+    sentence_plan.add_argument("--script", help="句子时间轴 JSON，例如 examples/demo-script.json")
+    sentence_plan.add_argument("--video", help="成片将使用的原片路径，写入计划")
+    sentence_plan.add_argument("--roles", help="宿主模型写回的角色 JSON")
+    sentence_plan.add_argument("--bpm", type=float, default=96)
+    sentence_plan.set_defaults(func=command_plan)
 
     planner = sub.add_parser("propose", help="按方法论钩子给一个轻量方向，不导出")
     planner.add_argument("--project", required=True)
