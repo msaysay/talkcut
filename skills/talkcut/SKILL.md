@@ -78,13 +78,13 @@ python3 <仓库根>/pipeline/cli/talkcut.py export --project "<工程目录>"
    ```
 
 7. **motion**  
-   用户确认表格之后再渲染。`motion` 默认读取 `layout-plan.json`。预设是 `clean-knowledge` 或 `gold-line`。
+   用户确认表格之后再渲染。`motion` 默认读取 `layout-plan.json`。口播预设优先 `opus-clean` 或 `opus-punch`，也可以用 `clean-knowledge` 或 `gold-line`。
 
    ```text
    python3 <仓库根>/pipeline/cli/talkcut.py motion --project "<工程目录>" --preset clean-knowledge --orientation vertical --music "<用户的BGM>"
    ```
 
-   `--orientation landscape` 是 1920×1080。两套预设都要能用这两种画幅。用户没给音乐就不要编造曲目，省略 `--music`。人声段配乐会自动变小。用户认可后加 `--lock`。
+   `--orientation landscape` 是 1920×1080。这些预设都要能用这两种画幅。用户没给音乐就不要编造曲目，省略 `--music`，也不要生成节拍器。人声段配乐会自动变小。用户认可后加 `--lock`。
 
    版式合集（不要把视频提交进仓库）：
 

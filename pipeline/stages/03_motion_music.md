@@ -12,8 +12,10 @@
 
 | id | 用途 |
 |---|---|
-| `clean-knowledge` | 干净知识口播。字幕淡入，数字用强调色，配乐在人声时压低 |
-| `gold-line` | 强节奏金句。节拍上轻微放大，顶栏闪动，金句带强调色下划 |
+| `opus-clean` | 紧凑知识口播。字幕最多两行且完整，字体角色分开 |
+| `opus-punch` | 数字砍入后锁成完整数字。配乐仍然只在传入时压低 |
+| `clean-knowledge` | 早一版干净知识口播。字幕淡入 |
+| `gold-line` | 早一版金句。顶栏闪动 |
 
 字幕角色来自 `methodology/EDIT_PIPELINE_HOOKS.json` 的 `caption_emphasis`：第一句是钩子，数字单独放大，`真正 / 金句` 走金句，`评论 / 私信 / 关注` 走 CTA 并再压低配乐。主色不超过 3 种。字幕离底边一截，不贴安全区。
 
@@ -57,7 +59,7 @@ python3 pipeline/cli/talkcut.py motion \
   --bpm 96
 ```
 
-省略 `--music` 时使用生成的底乐。省略 `--bpm` 且自带了音乐时，按音量突发起伏检测节拍。
+省略 `--music` 时没有配乐，也不生成节拍底乐。自带音乐时可以省略 `--bpm`，按音量起伏检测节拍。另一条可商用曲子用 `python3 examples/fetch_music.py` 下载后再传给 `--music`。
 
 `--lock` 把预设 id 写进 `motion-pack/presets/approved.json`。满意之后下一条继续用这个名字，不要每条重做一套动画。
 

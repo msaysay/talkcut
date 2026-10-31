@@ -3,6 +3,10 @@ import {Composition} from "remotion";
 import {CoverStill} from "../presets/cover/Cover";
 import {CleanKnowledge} from "../presets/clean-knowledge/Captions";
 import {GoldLine} from "../presets/gold-line/Captions";
+import {OpusClean} from "../presets/opus-clean/Captions";
+import {OpusPunch} from "../presets/opus-punch/Captions";
+import opusClean from "../presets/opus-clean/preset.json";
+import opusPunch from "../presets/opus-punch/preset.json";
 import type {MotionProps} from "./types";
 import clean from "../presets/clean-knowledge/preset.json";
 
@@ -47,6 +51,26 @@ export const RemotionRoot: React.FC = () => {
         width={1080}
         height={1920}
         defaultProps={fallback}
+        calculateMetadata={duration}
+      />
+      <Composition
+        id="opus-clean"
+        component={OpusClean}
+        durationInFrames={90}
+        fps={30}
+        width={1080}
+        height={1920}
+        defaultProps={{...fallback, theme: opusClean as MotionProps["theme"]}}
+        calculateMetadata={duration}
+      />
+      <Composition
+        id="opus-punch"
+        component={OpusPunch}
+        durationInFrames={90}
+        fps={30}
+        width={1080}
+        height={1920}
+        defaultProps={{...fallback, theme: opusPunch as MotionProps["theme"]}}
         calculateMetadata={duration}
       />
       <Composition

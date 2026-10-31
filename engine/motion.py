@@ -28,9 +28,10 @@ CTA = re.compile(r"评论|私信|关注|预约|置顶")
 NUMBER = re.compile(r"\d+|[零〇一二三四五六七八九十]+")
 GOLD = re.compile(r"真正|往往|别再|金句")
 LIST = re.compile(r"^(?:[1-9][.、]|第[一二三])")
-PHRASE_LIMIT = 18
+TWO_LINE_LIMIT = 24
 MIN_PHRASE = 0.04
 PHRASE_BREAK = re.compile(r"[，。！？、；,.!?\n]|…+|——+|—+|～+")
+PAUSE_CHARS = set("的了是在和就也要把被而与或及对给")
 
 
 def list_presets() -> list[dict]:
@@ -52,16 +53,47 @@ def load_preset(name: str) -> dict:
     raise TalkCutError(f"没有预设 {name}。可选：{known}")
 
 
+def _pause_cut(text: str, window_end: int) -> int:
+    window_end = max(1, min(len(text) - 1, window_end))
+    start = max(1, window_end // 2)
+    for index in range(window_end, start - 1, -1):
+        if text[index - 1] in PAUSE_CHARS:
+            return index
+    return window_end
+
+
+def _split_long(chunk: str, limit: int) -> list[str]:
+    """Break a long clause on a pause character. Never append an ellipsis."""
+    if len(chunk) <= limit:
+        return [chunk]
+    parts: list[str] = []
+    rest = chunk
+    while len(rest) > limit:
+        window_end = limit
+        if len(rest) - limit < 4:
+            window_end = max(4, len(rest) // 2)
+        cut = _pause_cut(rest, window_end)
+        if cut <= 0 or cut >= len(rest):
+            break
+        if len(rest) - cut < 4:
+            cut = max(4, len(rest) - 4)
+        parts.append(rest[:cut])
+        rest = rest[cut:]
+    if rest:
+        if parts and len(rest) < 4:
+            parts[-1] += rest
+        else:
+            parts.append(rest)
+    return [part for part in parts if part]
+
+
 def _phrase_parts(text: str) -> list[str]:
     raw = [part.strip() for part in PHRASE_BREAK.split(text) if part and part.strip()]
     if not raw and text.strip():
         raw = [text.strip()]
     parts: list[str] = []
     for chunk in raw:
-        if len(chunk) <= PHRASE_LIMIT:
-            parts.append(chunk)
-        else:
-            parts.extend(chunk[index : index + PHRASE_LIMIT] for index in range(0, len(chunk), PHRASE_LIMIT))
+        parts.extend(_split_long(chunk, TWO_LINE_LIMIT))
     return parts
 
 
@@ -108,9 +140,11 @@ def _unoverlap(pieces: list[dict]) -> list[dict]:
 
 
 def split_caption_phrases(captions: list[dict]) -> list[dict]:
-    """Split plan and edit captions on punctuation, pauses, and length.
+    """Split plan and edit captions on punctuation and pauses.
 
-    Each piece keeps a slice of the parent interval. Adjacent pieces never overlap.
+    A clause longer than two lines breaks after a pause character. Pieces stay
+    complete: pause marks are boundaries, and nothing is replaced with an ellipsis.
+    Adjacent pieces never overlap.
     """
     pieces: list[dict] = []
     for caption in captions:
@@ -230,7 +264,11 @@ def _music_track(
     source = Path(music).expanduser().resolve()
     if not source.is_file():
         raise TalkCutError(f"找不到配乐：{source}")
-    shutil.copyfile(source, target)
+    subprocess.run(
+        [ffmpeg, "-y", "-v", "error", "-i", str(source), "-t", f"{duration:.3f}", "-ac", "2", "-ar", "44100", str(target)],
+        check=True,
+        capture_output=True,
+    )
     samples = load_pcm(ffmpeg, target)
     beats, detected = detect_beats(samples, bpm_hint=bpm)
     if bpm is None and beats:
@@ -307,7 +345,7 @@ def build_props(project: dict, preset: dict, beats: list[float], duration: float
         "beats": beats,
         "nameplate": nameplate,
         "theme": preset,
-        "title": captions[0]["text"][:18],
+        "title": captions[0]["text"],
         "segments": [],
         "personFile": None,
         "personFrom": 0,
@@ -464,7 +502,7 @@ def render_from_plan(
         "beats": plan.get("beats") or music_beats or beats_from_bpm(duration, rate),
         "nameplate": None,
         "theme": preset,
-        "title": (captions[0]["text"][:18] if captions else preset.get("name") or ""),
+        "title": (captions[0]["text"] if captions else preset.get("name") or ""),
         "segments": segments,
         "personFile": "person.mp4" if person_file else None,
         "personFrom": person_from,

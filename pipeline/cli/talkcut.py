@@ -62,6 +62,8 @@ SCAFFOLD_FILES = [
     "engine/motion.py",
     "motion-pack/presets/clean-knowledge/preset.json",
     "motion-pack/presets/gold-line/preset.json",
+    "motion-pack/presets/opus-clean/preset.json",
+    "motion-pack/presets/opus-punch/preset.json",
     "THIRD_PARTY_NOTICES.md",
 ]
 
@@ -286,7 +288,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     motion = sub.add_parser("motion", help="用 Remotion 预设渲染竖屏字幕和配乐")
     motion.add_argument("--project", required=True)
-    motion.add_argument("--preset", required=True, help="clean-knowledge 或 gold-line")
+    motion.add_argument("--preset", required=True, help="opus-clean、opus-punch、clean-knowledge 或 gold-line")
     motion.add_argument("--orientation", choices=["vertical", "landscape"], default="vertical")
     motion.add_argument("--music", help="用户自带的 BGM；省略则不配乐，只保留人声")
     motion.add_argument("--bpm", type=float, help="节拍；省略时从配乐检测")

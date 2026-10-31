@@ -28,7 +28,8 @@ export type Theme = {
   compositionId: string;
   coverCompositionId?: string;
   name: string;
-  motion: "fade" | "beat-punch";
+  motion: "fade" | "beat-punch" | "settle" | "slash";
+  aesthetic?: string;
   fps: number;
   width: number;
   height: number;
@@ -48,6 +49,8 @@ export type Theme = {
     goldSize: number;
     ctaSize: number;
     listSize: number;
+    maxLines?: number;
+    minScale?: number;
   };
   music: {
     speechVolume: number;

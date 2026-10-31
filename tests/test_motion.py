@@ -14,7 +14,7 @@ if str(ROOT) not in sys.path:
 
 from engine.beats import beats_from_bpm, detect_beats, write_drum_bed
 from engine.media import load_pcm, probe
-from engine.motion import captions_from_edit, classify_caption, load_preset, render_motion, segments_from_plan, split_caption_phrases, _music_track
+from engine.motion import captions_from_edit, classify_caption, list_presets, load_preset, render_motion, segments_from_plan, split_caption_phrases, _music_track
 from engine.pipeline import apply_edit, import_media
 from engine.runtime import require_ffmpeg
 from engine.synthetic import make_breath_demo
@@ -97,15 +97,22 @@ class MotionPropsTest(unittest.TestCase):
             [{"text": "先说判断……再补一句", "start": 0, "end": 2, "emphasis": "body", "keywords": []}]
         )
         self.assertEqual([item["text"] for item in paused], ["先说判断", "再补一句"])
-        long_text = "我认为一条片子只讲一个判断其余都先放下"
-        wrapped = split_caption_phrases(
-            [{"text": long_text, "start": 1, "end": 4, "emphasis": "body", "keywords": ["一个"]}]
+        whole = "我认为一条片子只讲一个判断其余都先放下"
+        kept = split_caption_phrases(
+            [{"text": whole, "start": 1, "end": 4, "emphasis": "body", "keywords": ["一个"]}]
         )
-        self.assertTrue(wrapped)
-        self.assertTrue(all(len(item["text"]) <= 18 for item in wrapped))
+        self.assertEqual([item["text"] for item in kept], [whole])
+        self.assertNotIn("…", kept[0]["text"])
+        self.assertNotIn("...", kept[0]["text"])
+        long_text = "我认为一条片子只讲一个判断其余都先放下这句话也要完整读完不能断在半个字上"
+        wrapped = split_caption_phrases(
+            [{"text": long_text, "start": 1, "end": 6, "emphasis": "body", "keywords": ["一个"]}]
+        )
+        self.assertGreater(len(wrapped), 1)
         self.assertEqual("".join(item["text"] for item in wrapped), long_text)
-        self.assertIn("一个", wrapped[0]["keywords"])
-        self.assertEqual(wrapped[-1]["keywords"], [])
+        self.assertTrue(all(len(item["text"]) <= 28 for item in wrapped))
+        self.assertTrue(all("…" not in item["text"] and "..." not in item["text"] for item in wrapped))
+        self.assertIn("一个", "".join(item["text"] for item in wrapped))
         overlapping = split_caption_phrases(
             [
                 {"text": "第一句", "start": 0, "end": 1.2, "emphasis": "body", "keywords": []},
@@ -138,7 +145,8 @@ class MotionPropsTest(unittest.TestCase):
         self.assertEqual(segments[0]["body"], "")
         self.assertEqual(segments[0]["title"], "观点")
         self.assertGreater(len(captions), 1)
-        self.assertTrue(all(len(item["text"]) <= 18 for item in captions))
+        self.assertEqual("".join(item["text"] for item in captions), "先说判断再给例子")
+        self.assertTrue(all("…" not in item["text"] and "..." not in item["text"] for item in captions))
 
     def test_music_track_skips_drum_bed_without_a_file(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -152,6 +160,22 @@ class MotionPropsTest(unittest.TestCase):
             self.assertIsNone(track)
             self.assertEqual(beats[:3], [0.0, 0.5, 1.0])
             self.assertFalse((folder / "motion" / "public" / "music.wav").exists())
+
+    def test_opus_presets_duck_and_do_not_add_a_bed(self):
+        ids = {item["id"] for item in list_presets()}
+        self.assertIn("opus-clean", ids)
+        self.assertIn("opus-punch", ids)
+        clean = load_preset("opus-clean")
+        punch = load_preset("opus-punch")
+        self.assertEqual(clean["motion"], "settle")
+        self.assertEqual(punch["motion"], "slash")
+        self.assertEqual(clean["caption"]["maxLines"], 2)
+        self.assertEqual(punch["caption"]["maxLines"], 2)
+        for preset in (clean, punch):
+            music = preset["music"]
+            self.assertLess(music["speechVolume"], music["gapVolume"])
+            self.assertLess(music["ctaVolume"], music["speechVolume"])
+            self.assertLessEqual(preset["maxColors"], 3)
 
 
 class RenderPresetTest(unittest.TestCase):

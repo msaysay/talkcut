@@ -15,9 +15,11 @@ const VideoFill: React.FC<{file: string; radius?: number}> = ({file, radius = 0}
   />
 );
 
-const Card: React.FC<{title: string; body: string; theme: Theme; note?: string}> = ({title, body, theme, note}) => (
-  <div style={{color: theme.colors.ink, padding: "6% 7%"}}>
-    <div style={{fontFamily: "TC Cover, TC Hook, TC Body, TC Fallback, sans-serif", fontSize: "0.9em", letterSpacing: 2, color: theme.colors.accent}}>
+const Card: React.FC<{title: string; body: string; theme: Theme; note?: string}> = ({title, body, theme, note}) => {
+  const tight = theme.motion === "settle" || theme.motion === "slash";
+  return (
+  <div style={{color: theme.colors.ink, padding: tight ? "8% 8%" : "6% 7%"}}>
+    <div style={{fontFamily: "TC Cover, TC Hook, TC Body, TC Fallback, sans-serif", fontSize: tight ? "0.78em" : "0.9em", letterSpacing: tight ? 6 : 2, color: theme.colors.accent}}>
       {title}
     </div>
     {body ? (
@@ -31,7 +33,8 @@ const Card: React.FC<{title: string; body: string; theme: Theme; note?: string}>
       </div>
     ) : null}
   </div>
-);
+  );
+};
 
 const lerp = (from: number, to: number, amount: number) => from + (to - from) * amount;
 
@@ -58,7 +61,16 @@ export const Stage: React.FC<{
     const size = Math.min(width, height) * 0.28;
     return (
       <div style={{fontSize}}>
-        <div style={{position: "absolute", inset: 0, background: "#14181c"}}>{graphic}</div>
+        <div style={{position: "absolute", inset: 0, background: "#14181c"}}>
+          <div style={{position: "absolute", left: width * 0.06 + size + width * 0.04, right: width * margins.douyinRight, top: height * 0.09, color: theme.colors.ink}}>
+            <div style={{fontFamily: "TC Cover, TC Hook, TC Fallback, sans-serif", fontSize: "0.78em", letterSpacing: 6, color: theme.colors.accent}}>
+              {segment?.title}
+            </div>
+            <div style={{fontFamily: "TC Note, TC Fallback, sans-serif", fontSize: "1.05em", marginTop: "0.7em", color: theme.colors.accent}}>
+              先看这点
+            </div>
+          </div>
+        </div>
         <div style={{position: "absolute", left: width * 0.06, top: height * 0.08, width: size, height: size, borderRadius: size, overflow: "hidden", border: `4px solid ${theme.colors.ink}`}}>
           <VideoFill file={videoFile} />
         </div>

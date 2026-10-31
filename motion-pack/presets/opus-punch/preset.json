@@ -1,0 +1,55 @@
+{
+  "id": "opus-punch",
+  "compositionId": "opus-punch",
+  "coverCompositionId": "cover-still",
+  "name": "Opus 数字砍入",
+  "aesthetic": "opus-punch",
+  "motion": "slash",
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "colors": {
+    "ink": "#FFF6E8",
+    "accent": "#FF5A36",
+    "pill": "rgba(18,8,6,0.72)",
+    "stroke": "#140806",
+    "badge": "#FFE1D4"
+  },
+  "caption": {
+    "bottom": 300,
+    "side": 80,
+    "bodySize": 52,
+    "hookSize": 76,
+    "numberSize": 96,
+    "goldSize": 68,
+    "ctaSize": 66,
+    "listSize": 52,
+    "maxLines": 2,
+    "minScale": 0.72
+  },
+  "music": {
+    "speechVolume": 0.1,
+    "gapVolume": 0.32,
+    "ctaVolume": 0.06
+  },
+  "maxColors": 3,
+  "frames": {
+    "vertical": {"width": 1080, "height": 1920},
+    "landscape": {"width": 1920, "height": 1080}
+  },
+  "platformMargins": {
+    "douyinBottom": 0.14,
+    "douyinRight": 0.12,
+    "maskMinBottomPx": 140,
+    "pipPx": 380
+  },
+  "fontRoles": {
+    "body": "body",
+    "hook": "hook",
+    "cover": "cover",
+    "gold": "gold",
+    "number": "number",
+    "note": "note",
+    "fallback": "fallback"
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "id": "opus-clean",
+  "compositionId": "opus-clean",
+  "coverCompositionId": "cover-still",
+  "name": "Opus 干净口播",
+  "aesthetic": "opus-clean",
+  "motion": "settle",
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "colors": {
+    "ink": "#F6F3EC",
+    "accent": "#7DCFC3",
+    "pill": "rgba(8,12,14,0.74)",
+    "stroke": "#0C1012",
+    "badge": "#E7F4F1"
+  },
+  "caption": {
+    "bottom": 320,
+    "side": 84,
+    "bodySize": 52,
+    "hookSize": 72,
+    "numberSize": 88,
+    "goldSize": 64,
+    "ctaSize": 64,
+    "listSize": 52,
+    "maxLines": 2,
+    "minScale": 0.72
+  },
+  "music": {
+    "speechVolume": 0.08,
+    "gapVolume": 0.28,
+    "ctaVolume": 0.05
+  },
+  "maxColors": 3,
+  "frames": {
+    "vertical": {"width": 1080, "height": 1920},
+    "landscape": {"width": 1920, "height": 1080}
+  },
+  "platformMargins": {
+    "douyinBottom": 0.14,
+    "douyinRight": 0.12,
+    "maskMinBottomPx": 140,
+    "pipPx": 380
+  },
+  "fontRoles": {
+    "body": "body",
+    "hook": "hook",
+    "cover": "cover",
+    "gold": "gold",
+    "number": "number",
+    "note": "note",
+    "fallback": "fallback"
+  }
+}
