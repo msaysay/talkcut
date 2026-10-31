@@ -1,0 +1,77 @@
+{
+  "format": "talkcut-planning-v0",
+  "status": "documented fields only; no validator in this scaffold",
+  "upstream": {
+    "repo": "https://github.com/msaysay/sayframe",
+    "license": "MIT",
+    "reference": "references/planning-contract.json",
+    "upstreamFormat": "source-bound-directions-v1",
+    "note": "Field roles follow sayframe source-bound directions. Names and the confirm gate are TalkCut's."
+  },
+  "gate": "Stage 1 may only save proposals. No rough cut, motion, cover, or export until the user confirms one direction.",
+  "workflow": "import/read, then methodology plus transcript, then propose. Wait for the user. choose-plan comes after confirmation.",
+  "proposal": {
+    "catalogVersion": "string from methodology/EDIT_PIPELINE_HOOKS.json meta.version",
+    "sourceSha256": "hash of the imported media or the transcript bundle for this read",
+    "directions": [
+      {
+        "id": "short unique id, lowercase, stable inside this proposal",
+        "title": "accurate title within 48 characters; do not invent spoken lines",
+        "video_type": "one id from EDIT_PIPELINE_HOOKS.json video_types",
+        "journey_role": "why_need | why_me | why_now | need_education | trust_conversion | reach_breakout",
+        "audience": "who this cut is for; say unknown when unsure",
+        "goal": "the single job of this cut",
+        "hook_candidate": {
+          "text": "verbatim span from the current read",
+          "segmentIds": ["real segment ids covering that span"]
+        },
+        "opening_style": "提问式 | 讲故事 | 笃定式 | 对比式 | 夸张式 | 纠正式 | 喊话式",
+        "structure_blocks": {
+          "opening": {"segmentIds": ["ids"], "ratioHint": [0.1, 0.2]},
+          "development": {"segmentIds": ["ids"], "ratioHint": [0.55, 0.7]},
+          "close": {"segmentIds": ["ids"], "ratioHint": [0.15, 0.25]}
+        },
+        "support_blocks": [
+          {
+            "segmentIds": ["ids"],
+            "supportType": "one of structure.development.support_types",
+            "reason": "why these lines are one support unit"
+          }
+        ],
+        "gold_lines": [{"text": "verbatim", "segmentIds": ["ids"]}],
+        "numbers_to_punch": [{"text": "verbatim", "segmentIds": ["ids"]}],
+        "credibility_phrase": {"text": "verbatim or empty", "segmentIds": ["ids"]},
+        "cta": {
+          "text": "verbatim or empty",
+          "patternId": "one of cta_patterns ids, or null",
+          "segmentIds": ["ids"]
+        },
+        "cover_title_pattern": "one of cover_title_patterns ids",
+        "keep_human_moments": [{"segmentIds": ["ids"], "reason": "laugh, breath, pause, or reaction"}],
+        "cut_candidates": [
+          {
+            "segmentIds": ["ids"],
+            "heuristicId": "one of cut_heuristics ids",
+            "reason": "why this span is a candidate, not yet a cut"
+          }
+        ],
+        "order": ["kept segment ids in proposed picture order; each id once; no timestamps"],
+        "evidence": [
+          {
+            "id": "each id in order exactly once",
+            "quote": "full verbatim segment text; do not paraphrase"
+          }
+        ],
+        "gaps": ["missing proof, missing CTA, or facts to check; never describe a gap as done"],
+        "why": "why this direction and this order"
+      }
+    ]
+  },
+  "constraints": [
+    "Offer 1 to 4 directions. Do not pad the list, and do not file two directions with the same order.",
+    "Every quote and segment id comes from the current read. Do not invent lines, speakers, or timestamps.",
+    "The hook should land in the first 3 seconds of the proposed cut. Do not split a semantic unit only to hit that mark.",
+    "Saving a proposal does not change the current edit. choose-plan is reversible once the engine exists.",
+    "A newer read invalidates saved proposals."
+  ]
+}
